@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Payment - TradeBot Cloud</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #0b0e11;
+            color: #eaecef;
+            min-height: 100vh;
+            line-height: 1.6;
+            padding: 24px 16px 60px;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        /* Header / Logo */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            text-decoration: none;
+        }
+        .logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid rgba(14, 203, 129, 0.7);
+            box-shadow: 0 0 16px rgba(14, 203, 129, 0.45);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #070a0f;
+        }
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .header-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: #eaecef;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #eaecef;
+        }
+        .page-subtitle {
+            font-size: 13px;
+            color: #848e9c;
+            margin-bottom: 24px;
+        }
+
+        /* Cards */
+        .card {
+            background: #1e2126;
+            border: 1px solid #2a2e36;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #f0b90b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Network Selector Tabs */
+        .network-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .net-tab {
+            background: #14171d;
+            border: 1.5px solid #2a2e36;
+            border-radius: 12px;
+            padding: 14px 16px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .net-tab:hover {
+            border-color: rgba(240,185,11,0.5);
+            background: rgba(240,185,11,0.04);
+        }
+        .net-tab.active {
+            border-color: #f0b90b;
+            background: rgba(240,185,11,0.08);
+            box-shadow: 0 0 20px rgba(240,185,11,0.15);
+        }
+        .net-tab-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .net-tab.active .net-tab-title {
+            color: #f0b90b;
+        }
+        .net-tab-desc {
+            font-size: 11px;
+            color: #848e9c;
+            margin-top: 4px;
+        }
+
+        /* QR Code & Deposit Area */
+        .deposit-qr-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 10px;
+            background: #14171d;
+            border-radius: 12px;
+            border: 1px dashed #2a2e36;
+            margin-bottom: 20px;
+        }
+        .qr-frame {
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .qr-frame img {
+            width: 190px;
+            height: 190px;
+            display: block;
+        }
+        .amount-highlight {
+            font-size: 32px;
+            font-weight: 800;
+            color: #0ecb81;
+            font-family: 'SF Mono', 'Roboto Mono', monospace;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .amount-highlight span {
+            font-size: 16px;
+            color: #848e9c;
+        }
+
+        /* Wallet Box */
+        .wallet-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #0b0e11;
+            border: 1px solid #2a2e36;
+            border-radius: 10px;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .wallet-box:hover {
+            border-color: #f0b90b;
+        }
+        .wallet-addr {
+            font-family: 'SF Mono', 'Roboto Mono', monospace;
+            font-size: 13px;
+            color: #eaecef;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            user-select: all;
+        }
+        .copy-btn {
+            background: rgba(240,185,11,0.15);
+            border: 1px solid rgba(240,185,11,0.3);
+            color: #f0b90b;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .copy-btn:hover {
+            background: rgba(240,185,11,0.3);
+        }
+        .copy-btn.copied {
+            background: rgba(14,203,129,0.15);
+            border-color: rgba(14,203,129,0.4);
+            color: #0ecb81;
+        }
+
+        .meta-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        .meta-badge {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #2a2e36;
+            font-size: 11px;
+            color: #848e9c;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        /* Order Summary Rows */
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px solid #2a2e36;
+            font-size: 13px;
+        }
+        .summary-row:last-child { border-bottom: none; }
+        .summary-label { color: #848e9c; }
+        .summary-value { color: #eaecef; font-weight: 600; }
+
+        /* Form */
+        .form-group { margin-bottom: 16px; }
+        .form-label {
+            display: block; font-size: 13px; font-weight: 700;
+            color: #eaecef; margin-bottom: 6px;
+        }
+        .form-hint { font-size: 12px; color: #848e9c; margin-top: 5px; }
+        .form-input {
+            width: 100%; padding: 12px 14px;
+            background: #0b0e11; border: 1.5px solid #2a2e36; border-radius: 10px;
+            color: #eaecef; font-size: 14px;
+            font-family: 'SF Mono', 'Roboto Mono', monospace;
+            outline: none; transition: border-color 0.2s;
+        }
+        .form-input:focus { border-color: #f0b90b; }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%; padding: 15px 24px;
+            background: linear-gradient(135deg, #f0b90b 0%, #f8d12f 100%);
+            color: #0b0e11; border: none; border-radius: 10px;
+            font-size: 15px; font-weight: 800; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center;
+            justify-content: center; gap: 8px; text-decoration: none;
+            box-shadow: 0 4px 20px rgba(240,185,11,0.25);
+        }
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(240,185,11,0.4);
+        }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .submit-btn .spinner {
+            width: 18px; height: 18px; border: 2px solid rgba(11,14,17,0.3);
+            border-top-color: #0b0e11; border-radius: 50%;
+            animation: spin 0.6s linear infinite; display: none;
+        }
+        .submit-btn.loading .spinner { display: block; }
+        .submit-btn.loading .btn-text { display: none; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Notification Boxes */
+        .msg-box {
+            padding: 14px 18px; border-radius: 10px; margin-bottom: 20px;
+            display: none; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.5;
+        }
+        .msg-box.visible { display: flex; }
+        .msg-success { background: rgba(14,203,129,0.12); border: 1px solid rgba(14,203,129,0.3); color: #0ecb81; }
+        .msg-error { background: rgba(246,70,93,0.12); border: 1px solid rgba(246,70,93,0.3); color: #f6465d; }
+        .msg-info { background: rgba(240,185,11,0.12); border: 1px solid rgba(240,185,11,0.3); color: #f0b90b; }
+
+        /* Verified Celebration Box */
+        .celebration-box {
+            background: linear-gradient(135deg, rgba(14,203,129,0.15) 0%, rgba(14,203,129,0.05) 100%);
+            border: 2px solid #0ecb81; border-radius: 14px;
+            padding: 28px 20px; text-align: center; display: none; margin-bottom: 24px;
+        }
+        .celebration-box.visible { display: block; }
+        .celebration-icon { font-size: 48px; margin-bottom: 12px; }
+        .celebration-title { font-size: 20px; font-weight: 800; color: #0ecb81; margin-bottom: 6px; }
+        .celebration-sub { font-size: 13px; color: #eaecef; margin-bottom: 18px; }
+
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: #848e9c; text-decoration: none; font-size: 13px;
+            font-weight: 600; margin-top: 12px; transition: color 0.2s;
+        }
+        .back-link:hover { color: #f0b90b; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #1e2126; border: 1px solid #2a2e36;
+            color: #eaecef; padding: 12px 24px; border-radius: 10px;
+            font-size: 14px; font-weight: 600; z-index: 1000;
+            opacity: 0; transition: all 0.3s ease; pointer-events: none;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <a href="/packages" class="header">
+            <div class="logo">
+                <img src="/static/img/weexionic-logo.png" onerror="this.src='/bot/static/img/weexionic-logo.png'" alt="Weexionic">
+            </div>
+            <span class="header-text">WEEXIONIC TRADING BOT</span>
+        </a>
+
+        <h1 class="page-title">Complete Your USDT Payment</h1>
+        <p class="page-subtitle">Zero middleman fees &bull; 100% On-Chain Automated Instant Activation</p>
+
+        <!-- CELEBRATION BOX (Auto Activated) -->
+        <div class="celebration-box {% if order and order.status == 'verified' %}visible{% endif %}" id="celebrationBox">
+            <div class="celebration-icon">🎉</div>
+            <div class="celebration-title">Payment Confirmed! Your Bot is Activated</div>
+            <div class="celebration-sub" id="celebrationSub">
+                Your license has been issued and linked to your account. You can now launch and configure your trading bot.
+            </div>
+            <div style="background:#0b0e11; border:1px solid #2a2e36; padding:12px; border-radius:8px; font-family:monospace; font-size:14px; color:#0ecb81; margin-bottom:16px; user-select:all;" id="licenseKeyDisplay">
+                {{ order.license_key if (order and order.license_key) else 'LICENSE-KEY-ACTIVE' }}
+            </div>
+            <a href="/bot/" class="submit-btn" style="background:linear-gradient(135deg, #0ecb81 0%, #059669 100%); color:#fff; font-size:16px;">
+                🚀 Launch Trading Bot Now
+            </a>
+            <div style="font-size:12px; color:#848e9c; margin-top:12px;" id="redirectCountdownText"></div>
+        </div>
+
+        {% if not (order and order.status == 'verified') %}
+        <!-- NETWORK SELECTOR -->
+        <div class="network-selector">
+            <div class="net-tab active" id="tabTRC20" onclick="selectNetwork('TRC20')">
+                <div class="net-tab-title">
+                    <span>⚡ TRON (TRC-20)</span>
+                </div>
+                <div class="net-tab-desc">Recommended &bull; Fast confirmations</div>
+            </div>
+            <div class="net-tab" id="tabBEP20" onclick="selectNetwork('BEP20')">
+                <div class="net-tab-title">
+                    <span>⚡ BNB Chain (BEP-20)</span>
+                </div>
+                <div class="net-tab-desc">BSC Network &bull; Ultra-low fee</div>
+            </div>
+        </div>
+
+        <!-- PAYMENT DETAILS CARD -->
+        <div class="card">
+            <div class="card-title">
+                <span>Scan QR or Copy USDT Address</span>
+                <span style="font-size:12px; color:#0ecb81; font-weight:600;">Automated Verification Active</span>
+            </div>
+
+            <div class="deposit-qr-wrap">
+                <div class="amount-highlight">
+                    <span id="displayAmount">{{ order.amount if order else '79' }}.00</span>
+                    <span>USDT</span>
+                    <button class="copy-btn" style="padding:3px 8px; font-size:11px; margin-left:8px;" onclick="copyAmount()">Copy Amount</button>
+                </div>
+                <div style="font-size:12px; color:#848e9c; margin-bottom:14px;">Send exactly this amount on the selected network</div>
+
+                <div class="qr-frame">
+                    <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={{ wallet_trc20 or 'TLponfWCPEqdv8CqbvXAZESQYnoNiw5Bpp' }}" alt="Deposit QR">
+                </div>
+
+                <div class="wallet-box" onclick="copyWalletAddress()">
+                    <span class="wallet-addr" id="walletAddrText">{{ wallet_trc20 or 'TLponfWCPEqdv8CqbvXAZESQYnoNiw5Bpp' }}</span>
+                    <button class="copy-btn" id="copyWalletBtn" type="button">Copy Address</button>
+                </div>
+
+                <div class="meta-badges">
+                    <span class="meta-badge" id="networkBadge">Network: TRC-20 (Tron)</span>
+                    <span class="meta-badge" id="contractBadge">USDT Contract: ***jLj6t</span>
+                    <span class="meta-badge">1 Confirmation</span>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="summary-row">
+                <span class="summary-label">Order ID</span>
+                <span class="summary-value">{{ order.id if order else 'N/A' }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Package Plan</span>
+                <span class="summary-value">{{ order.package_name if order else 'Plan' }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Account Email</span>
+                <span class="summary-value">{{ user.email if user else '' }}</span>
+            </div>
+        </div>
+
+        <!-- NOTIFICATION / STATUS MESSAGES -->
+        <div class="msg-box msg-info" id="statusMsgBox">
+            <span id="statusMsgText"></span>
+        </div>
+        <div class="msg-box msg-error" id="errorMsgBox">
+            <span id="errorMsgText"></span>
+        </div>
+
+        <!-- SUBMIT TX HASH FORM -->
+        <div class="card" id="submitCard">
+            <div class="card-title">
+                <span>Enter Transaction Hash (TxID)</span>
+            </div>
+            <form id="paymentForm" enctype="multipart/form-data">
+                <input type="hidden" name="order_id" id="orderIdInput" value="{{ order.id if order else '' }}">
+
+                <div class="form-group">
+                    <label class="form-label" for="txHash">Transaction Hash / Order ID</label>
+                    <input type="text" class="form-input" id="txHash" name="tx_hash"
+                           placeholder="Paste 64-character TxID from Binance / Bybit / Trust Wallet"
+                           required autocomplete="off">
+                    <div class="form-hint">
+                        After transferring USDT from Binance/Trust Wallet, copy the withdrawal TxID and paste it here.
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top:14px;">
+                    <label class="form-label" style="display:flex; justify-content:space-between;">
+                        <span>Payment Screenshot <span style="font-weight:400; color:#848e9c;">(Optional)</span></span>
+                    </label>
+                    <input type="file" id="screenshot" name="screenshot" accept=".jpg,.jpeg,.png,.webp"
+                           style="font-size:12px; color:#848e9c;">
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span class="spinner"></span>
+                    <span class="btn-text">⚡ Verify Payment &amp; Activate Bot Instantly</span>
+                </button>
+            </form>
+        </div>
+
+        <div style="background:rgba(240,185,11,0.06); border:1px solid rgba(240,185,11,0.2); border-radius:10px; padding:12px 16px; font-size:12px; color:#848e9c; line-height:1.6; margin-bottom:20px;">
+            <strong style="color:#f0b90b;">ℹ️ Instant Activation:</strong> Our server directly queries the Tron and BSC blockchains. As soon as your transaction is confirmed on-chain, your account is unlocked automatically without waiting for admin approval.
+        </div>
+
+        <a href="/packages" class="back-link">
+            &larr; Back to Packages Selection
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const WALLETS = {
+            TRC20: {
+                address: "{{ wallet_trc20 or 'TLponfWCPEqdv8CqbvXAZESQYnoNiw5Bpp' }}",
+                network: "TRC-20 (Tron)",
+                contract: "USDT Contract: ***jLj6t",
+            },
+            BEP20: {
+                address: "{{ wallet_bep20 or '0xc53cd5f340bea5148ed657ca80ff51626901e609' }}",
+                network: "BEP-20 (BNB Smart Chain)",
+                contract: "USDT Contract: ***97955",
+            }
+        };
+
+        let currentNetwork = "TRC20";
+        let pollTimer = null;
+        const ORDER_ID = "{{ order.id if order else '' }}";
+
+        function selectNetwork(net) {
+            currentNetwork = net;
+            document.getElementById('tabTRC20').classList.toggle('active', net === 'TRC20');
+            document.getElementById('tabBEP20').classList.toggle('active', net === 'BEP20');
+
+            const info = WALLETS[net];
+            document.getElementById('walletAddrText').textContent = info.address;
+            document.getElementById('networkBadge').textContent = 'Network: ' + info.network;
+            document.getElementById('contractBadge').textContent = info.contract;
+            document.getElementById('qrImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(info.address);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        function copyAmount() {
+            const amt = "{{ order.amount if order else '79' }}";
+            navigator.clipboard.writeText(amt).then(() => showToast('Amount ' + amt + ' USDT copied!'));
+        }
+
+        function copyWalletAddress() {
+            const addr = document.getElementById('walletAddrText').textContent.trim();
+            navigator.clipboard.writeText(addr).then(() => {
+                const btn = document.getElementById('copyWalletBtn');
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                showToast('Wallet address copied!');
+                setTimeout(() => {
+                    btn.textContent = 'Copy Address';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // Form submission & auto blockchain verification
+        const form = document.getElementById('paymentForm');
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const txHash = document.getElementById('txHash').value.trim();
+                if (!txHash || txHash.length < 10) {
+                    showError('Please enter a valid Transaction Hash (TxID).');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.classList.add('loading');
+                submitBtn.disabled = true;
+                hideError();
+
+                const formData = new FormData(form);
+
+                try {
+                    const r = await fetch('/api/orders/submit', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await r.json();
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+
+                    if (data.verified || data.auto_verified) {
+                        triggerCelebration(data.license_key || 'ACTIVE');
+                    } else if (data.success) {
+                        showInfo(data.message || 'Transaction submitted! Checking blockchain confirmations...');
+                        startVerificationPolling();
+                    } else {
+                        showError(data.error || 'Failed to submit payment. Please verify your TxID.');
+                    }
+                } catch(err) {
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                    showError('Network error. Please check your internet connection.');
+                }
+            });
+        }
+
+        function showInfo(msg) {
+            const box = document.getElementById('statusMsgBox');
+            document.getElementById('statusMsgText').textContent = msg;
+            box.classList.add('visible');
+        }
+
+        function showError(msg) {
+            const box = document.getElementById('errorMsgBox');
+            document.getElementById('errorMsgText').textContent = msg;
+            box.classList.add('visible');
+        }
+
+        function hideError() {
+            const box = document.getElementById('errorMsgBox');
+            if (box) box.classList.remove('visible');
+        }
+
+        function triggerCelebration(licKey) {
+            if (pollTimer) clearInterval(pollTimer);
+            const celBox = document.getElementById('celebrationBox');
+            if (celBox) {
+                document.getElementById('licenseKeyDisplay').textContent = licKey;
+                celBox.classList.add('visible');
+            }
+            const submitCard = document.getElementById('submitCard');
+            if (submitCard) submitCard.style.display = 'none';
+            const statusBox = document.getElementById('statusMsgBox');
+            if (statusBox) statusBox.style.display = 'none';
+
+            let seconds = 3;
+            const cdText = document.getElementById('redirectCountdownText');
+            const interval = setInterval(() => {
+                if (cdText) cdText.textContent = 'Redirecting to your bot in ' + seconds + ' seconds...';
+                seconds--;
+                if (seconds < 0) {
+                    clearInterval(interval);
+                    window.location.href = '/bot/';
+                }
+            }, 1000);
+        }
+
+        function startVerificationPolling() {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(async () => {
+                try {
+                    const r = await fetch('/api/orders/check-verification/' + ORDER_ID, {method: 'POST'});
+                    const data = await r.json();
+                    if (data.verified) {
+                        triggerCelebration(data.license_key || 'ACTIVE');
+                    }
+                } catch(e) {}
+            }, 5000);
+        }
+
+        // Auto start polling if existing submitted order
+        {% if order and order.status == 'submitted' %}
+        window.addEventListener('DOMContentLoaded', () => {
+            showInfo('Payment proof already submitted! Monitoring blockchain for confirmations...');
+            startVerificationPolling();
+        });
+        {% endif %}
+    </script>
+</body>
+</html>

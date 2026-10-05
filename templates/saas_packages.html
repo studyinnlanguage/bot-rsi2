@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeBot SaaS - Choose Your Plan</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0b0e11 0%, #1a1d24 100%);
+            min-height: 100vh; color: #eaecef; padding: 24px 16px;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+
+        /* Header */
+        .header { text-align: center; margin-bottom: 36px; }
+        .logo {
+            width: 68px; height: 68px; border-radius: 50%;
+            border: 2px solid rgba(14, 203, 129, 0.7);
+            box-shadow: 0 0 20px rgba(14, 203, 129, 0.45);
+            margin: 0 auto 16px; overflow: hidden; display: flex; align-items: center; justify-content: center;
+            background: #070a0f;
+        }
+        .logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .page-title { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+        .page-subtitle { font-size: 13px; color: #848e9c; line-height: 1.5; }
+
+        /* User Info Bar */
+        .user-bar {
+            background: #1e2126; border: 1px solid #2a2e36; border-radius: 12px;
+            padding: 16px 20px; margin-bottom: 32px; display: flex; flex-wrap: wrap;
+            align-items: center; gap: 12px 24px; font-size: 13px;
+        }
+        .user-bar .label { color: #848e9c; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
+        .user-bar .value { color: #eaecef; font-weight: 600; word-break: break-all; }
+        .user-bar-item { flex: 1 1 200px; min-width: 0; }
+
+        /* Pricing Cards Grid */
+        .pricing-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 24px; margin-bottom: 40px; max-width: 760px; margin-left: auto; margin-right: auto;
+        }
+        .pricing-card {
+            background: #1e2126; border: 1px solid #2a2e36; border-radius: 16px;
+            padding: 32px 24px; text-align: center; position: relative;
+            transition: transform 0.2s, border-color 0.2s; display: flex; flex-direction: column;
+        }
+        .pricing-card:hover { transform: translateY(-4px); border-color: #3a3e46; }
+        .pricing-card.popular {
+            border-color: #f0b90b;
+            box-shadow: 0 0 40px rgba(240,185,11,0.12);
+        }
+        .badge {
+            position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, #f0b90b 0%, #f8d12f 100%);
+            color: #0b0e11; font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1px; padding: 4px 16px; border-radius: 20px; white-space: nowrap;
+        }
+        .plan-name { font-size: 16px; font-weight: 700; color: #848e9c; text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 8px; margin-top: 4px; }
+        .pricing-card.popular .plan-name { color: #f0b90b; }
+        .plan-price { font-size: 44px; font-weight: 800; color: #eaecef; margin-bottom: 4px; line-height: 1; }
+        .plan-price .currency { font-size: 20px; vertical-align: super; font-weight: 600; }
+        .plan-period { font-size: 13px; color: #848e9c; margin-bottom: 24px; }
+        .plan-features { list-style: none; text-align: left; margin-bottom: 28px; flex: 1; }
+        .plan-features li {
+            font-size: 13px; color: #eaecef; padding: 8px 0;
+            border-bottom: 1px solid rgba(42,46,54,0.6); display: flex; align-items: center; gap: 10px;
+        }
+        .plan-features li:last-child { border-bottom: none; }
+        .plan-features li .check { color: #0ecb81; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+        .btn-select {
+            width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 14px;
+            font-weight: 700; cursor: pointer; transition: transform 0.2s, opacity 0.2s;
+        }
+        .btn-select:hover:not(:disabled) { transform: translateY(-1px); }
+        .btn-select:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-select.btn-gold {
+            background: linear-gradient(135deg, #f0b90b 0%, #f8d12f 100%);
+            color: #0b0e11;
+        }
+        .btn-select.btn-outline {
+            background: transparent; color: #f0b90b;
+            border: 1.5px solid #f0b90b;
+        }
+        .btn-select.btn-outline:hover:not(:disabled) {
+            background: rgba(240,185,11,0.08);
+        }
+
+        /* Error / Info messages */
+        .msg {
+            padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 20px;
+            display: none; line-height: 1.5;
+        }
+        .msg.show { display: block; }
+        .msg-error { background: rgba(246,70,93,0.1); border: 1px solid rgba(246,70,93,0.3); color: #f6465d; }
+        .msg-success { background: rgba(14,203,129,0.1); border: 1px solid rgba(14,203,129,0.3); color: #0ecb81; }
+
+        /* Order History */
+        .section-title {
+            font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+        }
+        .section-title::before {
+            content: ''; display: inline-block; width: 4px; height: 20px;
+            background: #f0b90b; border-radius: 2px;
+        }
+        .orders-section { margin-bottom: 32px; }
+        .orders-loading, .orders-empty, .orders-error {
+            background: #1e2126; border: 1px solid #2a2e36; border-radius: 12px;
+            padding: 32px; text-align: center; font-size: 13px; color: #848e9c;
+        }
+        .order-card {
+            background: #1e2126; border: 1px solid #2a2e36; border-radius: 12px;
+            padding: 20px; margin-bottom: 12px;
+        }
+        .order-header {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; gap: 8px;
+        }
+        .order-id { font-family: monospace; font-size: 13px; color: #848e9c; }
+        .order-package { font-weight: 700; font-size: 14px; text-transform: capitalize; }
+        .order-amount { font-weight: 700; font-size: 14px; color: #f0b90b; }
+        .order-date { font-size: 12px; color: #848e9c; }
+        .order-status {
+            display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .status-submitted { background: rgba(240,185,11,0.12); color: #f0b90b; }
+        .status-pending { background: rgba(240,185,11,0.12); color: #f0b90b; }
+        .status-verified { background: rgba(14,203,129,0.12); color: #0ecb81; }
+        .status-rejected { background: rgba(246,70,93,0.12); color: #f6465d; }
+        .order-detail {
+            margin-top: 12px; padding: 14px; border-radius: 8px; font-size: 13px; line-height: 1.6;
+        }
+        .order-detail-verified {
+            background: rgba(14,203,129,0.08); border: 1px solid rgba(14,203,129,0.2); color: #0ecb81;
+        }
+        .order-detail-rejected {
+            background: rgba(246,70,93,0.08); border: 1px solid rgba(246,70,93,0.2); color: #f6465d;
+        }
+        .order-detail-waiting {
+            background: rgba(240,185,11,0.06); border: 1px solid rgba(240,185,11,0.2); color: #f0b90b;
+        }
+        .license-key {
+            font-family: monospace; font-size: 14px; background: #0b0e11; padding: 8px 12px;
+            border-radius: 6px; display: inline-block; margin-top: 6px;
+            word-break: break-all; user-select: all; letter-spacing: 0.5px;
+        }
+        .copy-btn {
+            display: inline-block; margin-left: 8px; padding: 6px 12px; background: rgba(14,203,129,0.15);
+            color: #0ecb81; border: 1px solid rgba(14,203,129,0.3); border-radius: 6px;
+            font-size: 11px; font-weight: 700; cursor: pointer; text-transform: uppercase;
+            letter-spacing: 0.5px; vertical-align: middle;
+        }
+        .copy-btn:hover { background: rgba(14,203,129,0.25); }
+
+        /* Logout */
+        .logout-section { text-align: center; padding-bottom: 24px; }
+        .logout-link {
+            color: #848e9c; font-size: 13px; text-decoration: none;
+            padding: 10px 24px; border: 1px solid #2a2e36; border-radius: 8px;
+            display: inline-block; transition: all 0.2s;
+        }
+        .logout-link:hover { color: #f6465d; border-color: #f6465d; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
+            .pricing-card.popular { order: -1; }
+            .page-title { font-size: 22px; }
+            .plan-price { font-size: 36px; }
+        }
+        @media (max-width: 480px) {
+            body { padding: 16px 12px; }
+            .user-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .order-header { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <img src="/static/img/weexionic-logo.png" onerror="this.src='/bot/static/img/weexionic-logo.png'" alt="Weexionic">
+            </div>
+            <h1 class="page-title">WEEXIONIC TRADING BOT</h1>
+            <p class="page-subtitle">
+                EMA Quad-Trend Strategy (8, 13, 21, 55) &mdash; 24/7 Cloud Automated Trading
+            </p>
+        </div>
+
+        <!-- User Info -->
+        <div class="user-bar">
+            <div class="user-bar-item">
+                <div class="label">Account</div>
+                <div class="value">{{ user.email }}</div>
+            </div>
+            {% if user.name %}
+            <div class="user-bar-item">
+                <div class="label">Name</div>
+                <div class="value">{{ user.name }}</div>
+            </div>
+            {% endif %}
+            {% if wallet_address %}
+            <div class="user-bar-item">
+                <div class="label">Wallet</div>
+                <div class="value" style="font-family:monospace; font-size:12px;">{{ wallet_address[:10] }}...{{ wallet_address[-6:] }}</div>
+            </div>
+            {% endif %}
+            {% if wallet_network %}
+            <div class="user-bar-item">
+                <div class="label">Network</div>
+                <div class="value">{{ wallet_network }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Message area -->
+        <div id="msgArea" class="msg"></div>
+
+        <!-- Pricing Cards -->
+        <div class="pricing-grid">
+            <!-- 1-Year (Popular) -->
+            <div class="pricing-card popular">
+                <div class="badge">Most Popular</div>
+                <div class="plan-name">1-Year License</div>
+                <div class="plan-price"><span class="currency">$</span>79</div>
+                <div class="plan-period">365 days full access</div>
+                <ul class="plan-features">
+                    <li><span class="check">&#10003;</span> Full EMA 8, 13, 21, 55 strategy</li>
+                    <li><span class="check">&#10003;</span> 24/7 cloud auto-trading</li>
+                    <li><span class="check">&#10003;</span> Multi-coin scanning &amp; execution</li>
+                    <li><span class="check">&#10003;</span> Strict 1:3 risk-reward (SL 2%, TP 6%)</li>
+                    <li><span class="check">&#10003;</span> Real-time P&amp;L dashboard</li>
+                    <li><span class="check">&#10003;</span> <strong>$10 USDT</strong> referral bonus per invite</li>
+                    <li><span class="check">&#10003;</span> Priority email &amp; trade support</li>
+                </ul>
+                <button class="btn-select btn-gold" onclick="selectPlan('yearly', this)">Select 1-Year Plan</button>
+            </div>
+
+            <!-- Lifetime -->
+            <div class="pricing-card">
+                <div class="badge" style="background: linear-gradient(135deg, #0ecb81 0%, #20e39b 100%); color:#0b0e11;">Best Value</div>
+                <div class="plan-name" style="color: #0ecb81;">Lifetime License</div>
+                <div class="plan-price"><span class="currency">$</span>500</div>
+                <div class="plan-period">one-time payment &mdash; forever access</div>
+                <ul class="plan-features">
+                    <li><span class="check">&#10003;</span> Everything in 1-Year plan</li>
+                    <li><span class="check">&#10003;</span> Lifetime unlimited access &amp; bot updates</li>
+                    <li><span class="check">&#10003;</span> Multi-coin &amp; WEEX / Binance support</li>
+                    <li><span class="check">&#10003;</span> Dedicated VIP support channel</li>
+                    <li><span class="check">&#10003;</span> <strong>$50 USDT</strong> referral bonus per invite</li>
+                    <li><span class="check">&#10003;</span> Priority access to all new algorithms</li>
+                </ul>
+                <button class="btn-select btn-outline" style="border-color:#0ecb81; color:#0ecb81;" onclick="selectPlan('lifetime', this)">Select Lifetime Plan</button>
+            </div>
+        </div>
+
+        <!-- Referral Section -->
+        <div class="orders-section">
+            <h2 class="section-title">Your Referral Link</h2>
+            <div id="referralContainer">
+                <div class="orders-loading">Loading referral info...</div>
+            </div>
+        </div>
+
+        <!-- Order History -->
+        <div class="orders-section">
+            <h2 class="section-title">Order History</h2>
+            <div id="ordersContainer">
+                <div class="orders-loading">Loading your orders...</div>
+            </div>
+        </div>
+
+        <!-- Logout -->
+        <div class="logout-section">
+            <a href="/?logout=1" class="logout-link">Back to Login</a>
+        </div>
+
+    </div>
+
+    <script>
+        // ---- Select Plan ----
+        async function selectPlan(pkg, btn) {
+            const msgArea = document.getElementById('msgArea');
+            msgArea.classList.remove('show', 'msg-error', 'msg-success');
+
+            btn.disabled = true;
+            const origText = btn.textContent;
+            btn.textContent = 'Processing...';
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+            try {
+                const r = await fetch('/api/orders/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({package: pkg}),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                const data = await r.json();
+
+                if (data.success && data.order_id) {
+                    msgArea.textContent = 'Redirecting to payment...';
+                    msgArea.classList.add('show', 'msg-success');
+                    window.location.href = '/payment/' + data.order_id;
+                } else {
+                    showMsgError(data.error || 'Failed to create order. Please try again.');
+                    btn.disabled = false;
+                    btn.textContent = origText;
+                }
+            } catch (err) {
+                clearTimeout(timeoutId);
+                showMsgError(err.name === 'AbortError' ? 'Request timed out. Please try again.' : 'Network error. Check your connection.');
+                btn.disabled = false;
+                btn.textContent = origText;
+            }
+        }
+
+        function showMsgError(text) {
+            const msgArea = document.getElementById('msgArea');
+            msgArea.textContent = text;
+            msgArea.className = 'msg show msg-error';
+        }
+
+        // ---- Load Order History ----
+        async function loadOrders() {
+            const container = document.getElementById('ordersContainer');
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            try {
+                const r = await fetch('/api/orders/my', {signal: controller.signal});
+                clearTimeout(timeoutId);
+
+                if (!r.ok) {
+                    throw new Error('HTTP ' + r.status);
+                }
+
+                const data = await r.json();
+
+                if (!data.orders || data.orders.length === 0) {
+                    container.innerHTML = '<div class="orders-empty">No orders yet. Select a plan above to get started.</div>';
+                    return;
+                }
+
+                let html = '';
+                const orders = data.orders;
+
+                for (let i = 0; i < orders.length; i++) {
+                    const o = orders[i];
+                    const statusClass = 'status-' + (o.status || 'submitted');
+                    const statusLabel = (o.status || 'submitted').charAt(0).toUpperCase() + (o.status || 'submitted').slice(1);
+                    const dateStr = o.created_at ? new Date(o.created_at).toLocaleString() : 'N/A';
+                    const amountStr = o.amount !== undefined ? '$' + o.amount : (o.package === 'yearly' ? '$79' : '$500');
+
+                    html += '<div class="order-card">';
+                    html += '  <div class="order-header">';
+                    html += '    <div><span class="order-id">' + (o.order_id || o.id || '') + '</span></div>';
+                    html += '    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">';
+                    html += '      <span class="order-package">' + (o.package || '') + '</span>';
+                    html += '      <span class="order-amount">' + amountStr + '</span>';
+                    html += '      <span class="order-status ' + statusClass + '">' + statusLabel + '</span>';
+                    html += '    </div>';
+                    html += '  </div>';
+                    html += '  <div class="order-date">' + dateStr + '</div>';
+
+                    // Status-specific detail
+                    if (o.status === 'verified' && o.license_key) {
+                        html += '  <div class="order-detail order-detail-verified">';
+                        html += '    &#10003; <strong>Payment verified!</strong> Your license key:<br>';
+                        html += '    <span class="license-key" id="key-' + i + '">' + escapeHtml(o.license_key) + '</span>';
+                        html += '    <button class="copy-btn" onclick="copyKey(\'key-' + i + '\')">Copy</button>';
+                        html += '  </div>';
+                    } else if (o.status === 'rejected') {
+                        html += '  <div class="order-detail order-detail-rejected">';
+                        html += '    &#10007; <strong>Payment rejected.</strong>';
+                        if (o.reject_reason) {
+                            html += ' Reason: ' + escapeHtml(o.reject_reason);
+                        }
+                        html += '  </div>';
+                    } else if (o.status === 'submitted' || o.status === 'pending') {
+                        html += '  <div class="order-detail order-detail-waiting">';
+                        html += '    &#9203; Waiting for verification. Your payment is being reviewed.';
+                        html += '  </div>';
+                    }
+
+                    html += '</div>';
+                }
+
+                container.innerHTML = html;
+
+            } catch (err) {
+                clearTimeout(timeoutId);
+                container.innerHTML = '<div class="orders-error">Failed to load orders. ' + escapeHtml(err.message) + '</div>';
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function copyKey(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const text = el.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = el.parentElement.querySelector('.copy-btn');
+                if (btn) {
+                    const orig = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = orig; }, 1500);
+                }
+            }).catch(() => {
+                // Fallback for older browsers
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                document.execCommand('copy');
+                sel.removeAllRanges();
+            });
+        }
+
+        // Load referral info
+        async function loadReferral() {
+            const container = document.getElementById('referralContainer');
+            try {
+                const r = await fetch('/api/user/referral');
+                const data = await r.json();
+                if (!data.success) {
+                    container.innerHTML = '<div class="orders-empty">Referral info not available.</div>';
+                    return;
+                }
+                const earnings = typeof data.referral_earnings === 'number' ? data.referral_earnings.toFixed(2) : '0.00';
+                const available = typeof data.available_balance === 'number' ? data.available_balance.toFixed(2) : '0.00';
+                const withdrawn = typeof data.total_withdrawn === 'number' ? data.total_withdrawn.toFixed(2) : '0.00';
+                const savedWallet = data.payout_wallet || '';
+
+                let html = '<div class="order-card">';
+                html += '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:20px;">';
+                html += '  <div style="background:#0b0e11; padding:16px; border-radius:10px; border:1px solid #2a2e36;">';
+                html += '    <div style="font-size:11px; color:#848e9c; text-transform:uppercase; font-weight:600;">Total Referral Bonus</div>';
+                html += '    <div style="font-size:26px; font-weight:800; color:#0ecb81; margin-top:4px;">$' + earnings + ' <span style="font-size:13px; font-weight:600; color:#848e9c;">USDT</span></div>';
+                html += '    <div style="font-size:11px; color:#848e9c; margin-top:4px;">Available: <strong style="color:#0ecb81;">$' + available + '</strong> | Paid: $' + withdrawn + '</div>';
+                html += '  </div>';
+                html += '  <div style="background:#0b0e11; padding:16px; border-radius:10px; border:1px solid #2a2e36;">';
+                html += '    <div style="font-size:11px; color:#848e9c; text-transform:uppercase; font-weight:600;">Total Invited Users</div>';
+                html += '    <div style="font-size:26px; font-weight:800; color:#f0b90b; margin-top:4px;">' + (data.referral_count || 0) + '</div>';
+                html += '  </div>';
+                html += '  <div style="background:#0b0e11; padding:16px; border-radius:10px; border:1px solid #2a2e36;">';
+                html += '    <div style="font-size:11px; color:#848e9c; text-transform:uppercase; font-weight:600;">Commission Rules</div>';
+                html += '    <div style="font-size:12px; color:#eaecef; margin-top:6px; line-height:1.5;">1-Year ($79): <strong style="color:#f0b90b;">$10 USDT</strong><br>Lifetime ($500): <strong style="color:#0ecb81;">$50 USDT</strong></div>';
+                html += '  </div>';
+                html += '</div>';
+
+                html += '<div style="margin-bottom:14px;">';
+                html += '  <div style="font-size:12px;color:#848e9c;text-transform:uppercase;margin-bottom:6px;font-weight:600;">Your Referral Link</div>';
+                html += '  <div style="display:flex;align-items:center;gap:8px;">';
+                html += '    <span class="license-key" id="refLink" style="font-size:12px;word-break:break-all;flex:1;">' + escapeHtml(data.referral_link) + '</span>';
+                html += '    <button class="copy-btn" onclick="copyText(\'refLink\')">Copy Link</button>';
+                html += '  </div>';
+                html += '</div>';
+
+                html += '<div style="margin-bottom:20px;">';
+                html += '  <div style="font-size:12px;color:#848e9c;text-transform:uppercase;margin-bottom:6px;font-weight:600;">Your Referral Code</div>';
+                html += '  <div style="display:flex;align-items:center;gap:8px;">';
+                html += '    <span class="license-key" id="refCode">' + escapeHtml(data.referral_code) + '</span>';
+                html += '    <button class="copy-btn" onclick="copyText(\'refCode\')">Copy Code</button>';
+                html += '  </div>';
+                html += '</div>';
+
+                // Payout Wallet & Withdrawal section
+                html += '<div style="background:#0b0e11; border:1px solid #2a2e36; border-radius:10px; padding:16px; margin-bottom:20px;">';
+                html += '  <div style="font-size:13px; font-weight:700; color:#f0b90b; margin-bottom:4px;">💰 Payout Wallet (Receive Referral Earnings)</div>';
+                html += '  <div style="font-size:11px; color:#0ecb81; margin-bottom:8px;">⚡ Referral bonuses are credited instantly. Payouts are transferred to your wallet within 1 to 3 business days.</div>';
+                html += '  <div style="font-size:12px; color:#848e9c; margin-bottom:10px;">Enter your USDT TRC20 or BEP20 address where you want to receive your referral bonus:</div>';
+                html += '  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">';
+                html += '    <input type="text" id="userPayoutWallet" placeholder="e.g. T... (TRC20) or 0x... (BEP20)" value="' + escapeHtml(savedWallet) + '" style="flex:1; min-width:240px; background:#1e2126; border:1px solid #2a2e36; color:#eaecef; padding:10px 12px; border-radius:8px; font-size:13px; font-family:monospace;">';
+                html += '    <button class="copy-btn" style="background:#f0b90b; color:#0b0e11; border:none; padding:10px 16px; font-weight:700;" onclick="savePayoutWallet()">Save Wallet</button>';
+                html += '  </div>';
+                html += '  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; padding-top:10px; border-top:1px solid #2a2e36;">';
+                html += '    <div style="font-size:12px; color:#eaecef;">Available to Withdraw: <strong style="color:#0ecb81; font-size:14px;">$' + available + ' USDT</strong></div>';
+                html += '    <button class="copy-btn" style="background:rgba(14,203,129,0.2); color:#0ecb81; border:1px solid #0ecb81; padding:8px 16px;" ' + (parseFloat(available) <= 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : 'onclick="requestPayout()"') + '>Request Payout</button>';
+                html += '  </div>';
+                html += '</div>';
+
+                if (data.payout_requests && data.payout_requests.length > 0) {
+                    html += '<div style="margin-top:16px; margin-bottom:10px; font-weight:700; font-size:13px; color:#f0b90b; border-top:1px solid #2a2e36; padding-top:14px;">Withdrawal Requests</div>';
+                    data.payout_requests.forEach(function(p) {
+                        const dateStr = p.created_at ? new Date(p.created_at).toLocaleDateString() : '';
+                        const isPaid = p.status === 'paid';
+                        const statusLabel = isPaid ? 'PAID' : 'PENDING (1-3 BUSINESS DAYS)';
+                        html += '<div style="padding:8px 0; border-bottom:1px solid rgba(42,46,54,0.6); font-size:12px; display:flex; justify-content:space-between; align-items:center;">';
+                        html += '  <div><strong>' + escapeHtml(p.id) + '</strong> &bull; ' + dateStr + '<br><span style="font-family:monospace; color:#848e9c; font-size:11px;">' + escapeHtml(p.wallet_address || '') + '</span></div>';
+                        html += '  <div style="text-align:right;"><span style="font-weight:700; color:' + (isPaid ? '#0ecb81' : '#f0b90b') + ';">$' + p.amount + ' USDT</span><br><span class="order-status ' + (isPaid ? 'status-verified' : 'status-pending') + '" style="font-size:10px; padding:2px 8px;">' + statusLabel + '</span></div>';
+                        html += '</div>';
+                    });
+                }
+
+                if (data.referral_history && data.referral_history.length > 0) {
+                    html += '<div style="margin-top:16px; margin-bottom:10px; font-weight:700; font-size:13px; color:#0ecb81; border-top:1px solid #2a2e36; padding-top:14px;">Bonus Credit History</div>';
+                    data.referral_history.forEach(function(h) {
+                        const dateStr = h.timestamp ? new Date(h.timestamp).toLocaleDateString() : '';
+                        html += '<div style="padding:8px 0; border-bottom:1px solid rgba(42,46,54,0.6); font-size:12px; display:flex; justify-content:space-between; align-items:center;">';
+                        html += '  <div><strong>' + escapeHtml(h.package_name || h.package_id) + '</strong> <span style="color:#848e9c; font-size:11px;">(' + dateStr + ')</span></div>';
+                        html += '  <div style="font-weight:700; color:#0ecb81; font-size:13px;">+' + h.bonus_amount + ' USDT</div>';
+                        html += '</div>';
+                    });
+                }
+
+                if (data.referred_users && data.referred_users.length > 0) {
+                    html += '<div style="margin-top:16px; margin-bottom:8px; font-weight:700; font-size:13px; color:#848e9c; border-top:1px solid #2a2e36; padding-top:14px;">Invited Users Tree (' + data.referred_users.length + ')</div>';
+                    data.referred_users.forEach(function(u) {
+                        html += '<div style="padding:8px 0;border-bottom:1px solid rgba(42,46,54,0.6);font-size:12px;display:flex;justify-content:space-between;align-items:center;">';
+                        html += '  <div><strong>' + escapeHtml(u.name || u.email) + '</strong> <span style="color:#848e9c; font-size:11px;">(' + escapeHtml(u.email) + ')</span></div>';
+                        html += '  <div style="text-align:right;">' + (u.has_license ? '<span style="color:#0ecb81; font-weight:600;">Active (' + escapeHtml(u.plan || '') + ')</span>' : '<span style="color:#848e9c;">Registered</span>');
+                        if (u.bonus_earned > 0) {
+                            html += '<br><span style="color:#0ecb81; font-size:11px; font-weight:700;">Bonus: +' + u.bonus_earned + ' USDT</span>';
+                        }
+                        html += '  </div>';
+                        html += '</div>';
+                    });
+                }
+                html += '</div>';
+                container.innerHTML = html;
+            } catch (err) {
+                container.innerHTML = '<div class="orders-error">Failed to load referral info.</div>';
+            }
+        }
+
+        async function savePayoutWallet() {
+            const input = document.getElementById('userPayoutWallet');
+            if (!input || !input.value.trim()) { alert('Please enter your USDT wallet address'); return; }
+            try {
+                const r = await fetch('/api/user/payout-wallet', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({wallet_address: input.value.trim()})
+                });
+                const res = await r.json();
+                if (res.success) { alert('Payout wallet saved!'); loadReferral(); }
+                else { alert('Failed: ' + (res.error || 'Unknown error')); }
+            } catch(e) { alert('Network error'); }
+        }
+
+        async function requestPayout() {
+            const input = document.getElementById('userPayoutWallet');
+            const wallet = input ? input.value.trim() : '';
+            if (!wallet) {
+                alert('Please enter and save your USDT payout wallet address first.');
+                return;
+            }
+            if (!confirm('Request withdrawal of your referral commission to wallet:\n' + wallet + '\n\nNote: Referral payouts are processed within 1 to 3 business days. Confirm?')) return;
+            try {
+                const r = await fetch('/api/user/request-payout', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({wallet_address: wallet})
+                });
+                const res = await r.json();
+                if (res.success) { alert(res.message); loadReferral(); }
+                else { alert('Failed: ' + (res.error || 'Unknown error')); }
+            } catch(e) { alert('Network error'); }
+        }
+
+        function copyText(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            navigator.clipboard.writeText(el.textContent).then(() => {
+                const btn = el.parentElement.querySelector('.copy-btn');
+                if (btn) { const orig = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = orig; }, 1500); }
+            });
+        }
+
+        // Load on page load
+        loadReferral();
+        loadOrders();
+    </script>
+</body>
+</html>
