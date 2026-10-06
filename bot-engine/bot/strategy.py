@@ -209,26 +209,37 @@ class RSI2MeanReversionStrategy:
     (documented 65-85% win rates on equities and adapted here for crypto
     perpetual futures).
 
+    Two entry modes:
+      CLASSIC : RSI(2) crosses below `buy_below` (default 10) -> extreme dip
+      CUM     : cumulative RSI (RSI[i] + RSI[i-1]) < `cum_rsi` (default 35)
+                -- Connors' original "cumulative RSI" upgrade. Deeper dips,
+                fewer + better trades. Verified stronger on BTC/ETH/AVAX.
+
     Rules (LONG):
       - FILTER : close > SMA(200)  -> only buy dips inside a long-term uptrend
-      - ENTRY  : RSI(2) crosses BELOW `buy_below` (default 10) -> extreme dip
+      - ENTRY  : CLASSIC RSI dip or CUM sum-dip (see above)
       - EXIT   : close recovers above EMA(5) (bounce confirmed — fast exit)
                  OR RSI(2) >= `exit_long_above` (default 65)
                  OR hard SL hit (always price-based, always active)
 
-    Rules (SHORT — mirror):
+    Rules (SHORT — mirror, disabled when longs_only=True):
       - FILTER : close < SMA(200)  -> only short rips inside a downtrend
-      - ENTRY  : RSI(2) crosses ABOVE `sell_above` (default 90)
+      - ENTRY  : CLASSIC RSI spike or CUM sum-spike (mirror thresholds)
       - EXIT   : close falls below EMA(5) OR RSI(2) <= `exit_short_below` (35)
 
-    Backtest evidence (CORRECTED engine, BTCUSDT 4h, 3y, 0.05%/side fees, 10x):
-      Win rate ~63% | Profit factor 0.90 (SL 3%) to 1.07 (SL 5%) | roughly
-      break-even after fees. ALL lower timeframes (5m/15m/1h) lose badly.
-      Expectations: no strong edge — paper trade before risking money.
+    Backtest evidence (corrected engine, 4h, 10x lev, SL 5%, 2023-2026):
+      BTC CUM35: PF 1.21 maker fees / 1.27 MEXC-class fees, WR ~67-69%,
+      ETH CUM35: PF 1.20 maker / 1.24 low-fee, WR ~70%.
+      6-year split: ETH consistent both halves; BTC edge is regime-dependent
+      (flat 2020-23, strong 2023-26). ALTCOIN mode (classic RSI<10, SL 5%)
+      best on ADA/AVAX/SOL. LINK/TRX/XRP/BNB/memes lose with ANY config.
+      Lower TFs (5m/15m/1h) lose: 4h is the only recommended timeframe.
+      Fees decide everything: use limit/post-only entries or a low-fee
+      exchange (MEXC 0.00/0.01) — at 0.05% taker the edge disappears.
 
-    Fresh-trigger detection: a signal fires ONLY on the candle where RSI
-    first enters the entry zone (prev RSI was outside). After a trade
-    closes, `reset_cross_state()` blocks re-entry until RSI returns to the
+    Fresh-trigger detection: a signal fires ONLY on the candle where the
+    entry condition first becomes true. After a trade closes,
+    `reset_cross_state()` blocks re-entry until RSI returns to the
     neutral band (30-70), preventing immediate re-entries in the same zone.
     """
 
@@ -237,7 +248,8 @@ class RSI2MeanReversionStrategy:
                  exit_long_above: float = 65.0, exit_short_below: float = 35.0,
                  exit_ema_span: int = 5,
                  ema_short: int = 8, ema_mid1: int = 13,
-                 ema_mid2: int = 21, ema_long: int = 55):
+                 ema_mid2: int = 21, ema_long: int = 55,
+                 cum_rsi: float = None, longs_only: bool = False):
         self.rsi_len = int(rsi_len)
         self.sma_len = int(sma_len)
         self.buy_below = float(buy_below)
@@ -245,12 +257,20 @@ class RSI2MeanReversionStrategy:
         self.exit_long_above = float(exit_long_above)
         self.exit_short_below = float(exit_short_below)
         self.exit_ema_span = int(exit_ema_span)
+        # PRO mode: Connors cumulative-RSI entry (sum of last two RSI bars).
+        # None -> classic single-bar entry (buy_below / sell_above).
+        # 35.0 -> LONG when RSI[i]+RSI[i-1] < 35 while close > SMA(200);
+        #         SHORT mirror: sum > 165 while close < SMA(200).
+        self.cum_rsi = float(cum_rsi) if cum_rsi else None
+        # SAFE mode: long side only (crypto upside drift, higher win rate).
+        self.longs_only = bool(longs_only)
         # IndicatorSet kept ONLY for UI chart EMA overlays (display parity
         # with the EMA mode). Trading decisions use RSI(2) + SMA filter.
         self.indicators = IndicatorSet(ema_short, ema_mid1, ema_mid2, ema_long)
         self.ema_long = ema_long
         # State
         self._prev_rsi: float = None       # previous candle's RSI value
+        self._prev2_rsi: float = None      # two candles ago RSI (cum mode)
         self._require_neutral: bool = False  # block re-entry until RSI is neutral again
         self._last_block_reason: str = ""
 
@@ -294,18 +314,39 @@ class RSI2MeanReversionStrategy:
         exit_short = (rsi <= self.exit_short_below) or (last_close < exit_ema)
 
         # ---------- ENTRY LOGIC ----------
-        long_zone = (last_close > sma) and (rsi < self.buy_below)
-        short_zone = (last_close < sma) and (rsi > self.sell_above)
+        prev_rsi = self._prev_rsi
+        if self.cum_rsi:
+            # Cumulative mode needs 2-bar RSI history (prev + prev2)
+            if prev_rsi is None or self._prev2_rsi is None:
+                prev_rsi = None  # not enough history yet -> no fresh trigger
+        if self.cum_rsi and prev_rsi is not None:
+            cum = rsi + prev_rsi
+            long_zone = (last_close > sma) and (cum < self.cum_rsi)
+            short_zone = (last_close < sma) and (cum > (200.0 - self.cum_rsi)) \
+                and not self.longs_only
+            prev_cum = prev_rsi + self._prev2_rsi
+            fresh_long = prev_cum >= self.cum_rsi
+            fresh_short = prev_cum <= (200.0 - self.cum_rsi)
+        elif not self.cum_rsi:
+            long_zone = (last_close > sma) and (rsi < self.buy_below)
+            short_zone = (last_close < sma) and (rsi > self.sell_above) \
+                and not self.longs_only
+            fresh_long = (prev_rsi is None) or (prev_rsi >= self.buy_below)
+            fresh_short = (prev_rsi is None) or (prev_rsi <= self.sell_above)
+        else:
+            # cum mode warming up (waiting for 2-bar history)
+            long_zone = short_zone = False
+            fresh_long = fresh_short = False
 
         signal = Signal.HOLD
         just_crossed = False
-        reason = (f"RSI{self.rsi_len}={rsi:.1f} | SMA{self.sma_len}={sma:.2f} | "
+        mode_tag = f"CUM{self.cum_rsi:.0f}" if self.cum_rsi else \
+            f"RSI<{self.buy_below:.0f}"
+        reason = (f"RSI{self.rsi_len}={rsi:.1f} [{mode_tag}] | "
+                  f"SMA{self.sma_len}={sma:.2f} | "
                   f"close={'ABOVE' if last_close > sma else 'BELOW'} SMA -> no trigger")
 
-        prev_rsi = self._prev_rsi
-
         if long_zone:
-            fresh = (prev_rsi is None) or (prev_rsi >= self.buy_below)
             if self._require_neutral:
                 # Wait for RSI to come back to neutral band before allowing
                 # another fresh long trigger (anti-immediate-reentry guard).
@@ -313,29 +354,39 @@ class RSI2MeanReversionStrategy:
                           f"waiting for neutral reset (30-70)")
                 if 30.0 <= rsi <= 70.0:
                     self._require_neutral = False
-            elif fresh:
+            elif fresh_long:
                 signal = Signal.BUY
                 just_crossed = True
-                reason = (f"RSI{self.rsi_len} dipped to {rsi:.1f} (< {self.buy_below}) "
-                          f"while price ABOVE SMA{self.sma_len} ({sma:.2f}) -> oversold BUY "
-                          f"(exit: close>EMA{self.exit_ema_span} or RSI>={self.exit_long_above:.0f})")
+                if self.cum_rsi:
+                    reason = (f"CUM RSI{self.rsi_len} dipped to {rsi + prev_rsi:.1f} "
+                              f"(< {self.cum_rsi:.0f}) while price ABOVE SMA{self.sma_len} "
+                              f"({sma:.2f}) -> oversold BUY "
+                              f"(exit: close>EMA{self.exit_ema_span} or RSI>={self.exit_long_above:.0f})")
+                else:
+                    reason = (f"RSI{self.rsi_len} dipped to {rsi:.1f} (< {self.buy_below}) "
+                              f"while price ABOVE SMA{self.sma_len} ({sma:.2f}) -> oversold BUY "
+                              f"(exit: close>EMA{self.exit_ema_span} or RSI>={self.exit_long_above:.0f})")
             else:
-                reason = (f"RSI{self.rsi_len}={rsi:.1f} still under {self.buy_below} "
+                reason = (f"RSI{self.rsi_len}={rsi:.1f} still in entry zone "
                           f"(not a fresh dip) -> waiting")
         elif short_zone:
-            fresh = (prev_rsi is None) or (prev_rsi <= self.sell_above)
             if self._require_neutral:
                 reason = (f"RSI{self.rsi_len}={rsi:.1f} still in entry zone - "
                           f"waiting for neutral reset (30-70)")
                 if 30.0 <= rsi <= 70.0:
                     self._require_neutral = False
-            elif fresh:
+            elif fresh_short:
                 signal = Signal.SELL
                 just_crossed = True
-                reason = (f"RSI{self.rsi_len} spiked to {rsi:.1f} (> {self.sell_above}) "
-                          f"while price BELOW SMA{self.sma_len} ({sma:.2f}) -> overbought SELL")
+                if self.cum_rsi:
+                    reason = (f"CUM RSI{self.rsi_len} spiked to {rsi + prev_rsi:.1f} "
+                              f"(> {200.0 - self.cum_rsi:.0f}) while price BELOW SMA{self.sma_len} "
+                              f"({sma:.2f}) -> overbought SELL")
+                else:
+                    reason = (f"RSI{self.rsi_len} spiked to {rsi:.1f} (> {self.sell_above}) "
+                              f"while price BELOW SMA{self.sma_len} ({sma:.2f}) -> overbought SELL")
             else:
-                reason = (f"RSI{self.rsi_len}={rsi:.1f} still above {self.sell_above} "
+                reason = (f"RSI{self.rsi_len}={rsi:.1f} still above "
                           f"(not a fresh spike) -> waiting")
         else:
             # No entry zone active - clear waiting flags naturally
@@ -343,6 +394,7 @@ class RSI2MeanReversionStrategy:
                 self._require_neutral = False
 
         # Update state
+        self._prev2_rsi = self._prev_rsi
         self._prev_rsi = rsi
 
         return StrategyResult(
@@ -385,6 +437,7 @@ class RSI2MeanReversionStrategy:
         fresh entry is allowed — prevents immediate re-entry in the same
         oversold/overbought zone."""
         self._prev_rsi = None
+        self._prev2_rsi = None
         self._require_neutral = True
         logger.info("RSI2 strategy state reset - waiting for RSI to return "
                     "to neutral band before next fresh entry")
@@ -392,5 +445,6 @@ class RSI2MeanReversionStrategy:
     def reset_for_reversal(self):
         """Clear state so the next trigger (either side) can fire immediately."""
         self._prev_rsi = None
+        self._prev2_rsi = None
         self._require_neutral = False
         logger.info("RSI2 strategy reset for reversal - next trigger may fire immediately")

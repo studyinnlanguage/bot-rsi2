@@ -1,4 +1,66 @@
-# RSI-2 Backtest Results — CORRECTED (Oct 2026)
+# RSI-2 Backtest Results — CORRECTED + OPTIMIZED (Oct 2026, v2.1)
+
+## OPTIMIZATION v2.1 — final verified config (read this first)
+
+800-config grid on BTC+ETH 4h (3y) with the corrected engine, then 11-coin
+validation, then a 6-year out-of-sample split. Engine semantics = live bot
+(flat-only entries, neutral-band re-arm, 1h cooldown, intrabar SL).
+
+### Fee models decide everything
+
+| Fee model (entry/exit %) | BTC PF | ETH PF | Verdict |
+|---|---|---|---|
+| taker 0.05/0.05 (market orders, Binance default) | 1.09 | 1.12 | edge mostly eaten |
+| maker 0.02/0.02 (limit orders) | 1.21 | 1.20 | solid |
+| low-fee 0.00/0.01 (MEXC futures class) | **1.27** | **1.24** | best |
+
+Mean reversion is fee-sensitive by nature: use limit/post-only entries or a
+low-fee exchange. This is the single biggest lever we found.
+
+### Verified presets (4h, 10x, SL 5%, 2023-2026)
+
+| Preset | Coins | Config | PF maker | PF lowfee | WR | 3y ROE (lowfee) |
+|---|---|---|---|---|---|---|
+| **PRO** | BTC, ETH | CUM RSI-35 entry, exit RSI>=65 or close>EMA5 | 1.21 / 1.20 | 1.27 / 1.24 | 67-70% | BTC +359%, ETH +504% |
+| **ALTCOIN** | ADA, AVAX, SOL | classic RSI<10 entry, exit RSI>=65/EMA5 | 1.21 / 1.15 / 1.10 | 1.24 / 1.18 / 1.13 | 63-66% | ADA +651%, AVAX +548%, SOL +409% |
+| **SAFE** | BTC, ETH | PRO + longs-only | higher WR (69-72%) | — | 69-72% | lower total (shorts carried profit in 2023-26) |
+
+Rejected coins (lose with ANY config, all fee models): **LINK, TRX, XRP, BNB,
+DOGE, memes**. Coin selection matters more than parameter tuning.
+
+### 6-year out-of-sample split (4h, 10x, maker fees, CUM35/SL5)
+
+| Coin | H1 2020-23 | H2 2023-26 | Honest read |
+|---|---|---|---|
+| BTC | PF 0.99 (-14%) | PF 1.26 (+355%) | regime-dependent: dead 2020-23, strong 2023-26 |
+| ETH | PF 1.10 (+304%) | PF 1.21 (+458%) | consistent across 6 years |
+
+Max drawdowns are deep (up to ~45% of margin at 10x on the ROE curve). No
+guarantee the 2023-26 regime persists.
+
+### Timeframe re-check with optimized config
+
+| TF | BTC | ETH | Verdict |
+|---|---|---|---|
+| 1h (2y, maker) | PF 0.97 | PF 0.88 | still loses |
+| 1h (2y, 0-fee) | PF 1.08 | PF 0.95 | not robust |
+| 4h | best | best | **only recommended TF** |
+
+5m/15m confirmed losing earlier. 4h remains the ONLY recommended timeframe.
+
+### Bottom line for v2.1
+
+- Best honest, verified setup: **PRO preset, BTC+ETH, 4h, 10x, low fees**
+  → PF ~1.2-1.27, WR ~67-70%, roughly +120%/year on ROE at 10x in 2023-26,
+  with deep drawdowns and no guarantee of persistence.
+- At 0.05% taker fees the same strategy is marginal — sell the bot as a TOOL,
+  never as a guaranteed profit machine.
+- The live class was replay-verified against this engine on BTC 4h:
+  **identical trades (111/111, PF 1.26, WR 68.5%)**.
+
+---
+
+## Historical: original corrected analysis (v2.0, before optimization)
 
 ## Bug disclosure (read this first)
 

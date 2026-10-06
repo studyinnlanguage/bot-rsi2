@@ -98,6 +98,8 @@ DEFAULT_CONFIG = {
     "strategy": "rsi2",
     "rsi_len": 2,
     "sma_len": 200,
+    "rsi_cum": 35,
+    "longs_only": False,
     "rsi_buy_below": 10,
     "rsi_sell_above": 90,
     "rsi_exit_long": 65,
@@ -106,7 +108,7 @@ DEFAULT_CONFIG = {
     "amount_mode": "fixed",
     "amount": 100,
     "amount_pct": 10,
-    "stop_loss_pct": 3,
+    "stop_loss_pct": 5,
     "take_profit_pct": 6,
     "trailing_roe_pct": 100.0,
     "tp_mode": "trailing",
@@ -197,8 +199,8 @@ def update_config():
     for k in ["exchange", "api_passphrase", "symbol", "symbols_list", "timeframe",
               "leverage", "amount", "amount_mode", "amount_pct",
               "stop_loss_pct", "take_profit_pct", "trailing_roe_pct", "tp_mode", "mode", "testnet", "auto_start",
-              "strategy", "rsi_len", "sma_len", "rsi_buy_below", "rsi_sell_above",
-              "rsi_exit_long", "rsi_exit_short",
+              "strategy", "rsi_len", "sma_len", "rsi_cum", "longs_only",
+              "rsi_buy_below", "rsi_sell_above", "rsi_exit_long", "rsi_exit_short",
               "telegram_enabled", "telegram_bot_token", "telegram_chat_id",
               "email_enabled", "email_smtp_server", "email_smtp_port",
               "email_sender", "email_password", "email_receiver",
@@ -229,6 +231,10 @@ def update_config():
         CONFIG["strategy"] = "rsi2"
     CONFIG["rsi_len"] = max(2, min(14, int(CONFIG.get("rsi_len", 2))))
     CONFIG["sma_len"] = max(50, min(400, int(CONFIG.get("sma_len", 200))))
+    # Cumulative-RSI PRO mode: 0 disables (classic single-bar entry).
+    _cum = float(CONFIG.get("rsi_cum", 35) or 0)
+    CONFIG["rsi_cum"] = 0 if _cum <= 0 else max(10.0, min(80.0, _cum))
+    CONFIG["longs_only"] = bool(CONFIG.get("longs_only"))
     CONFIG["rsi_buy_below"] = max(2.0, min(30.0, float(CONFIG.get("rsi_buy_below", 10))))
     CONFIG["rsi_sell_above"] = max(70.0, min(98.0, float(CONFIG.get("rsi_sell_above", 90))))
     CONFIG["rsi_exit_long"] = max(50.0, min(95.0, float(CONFIG.get("rsi_exit_long", 65))))

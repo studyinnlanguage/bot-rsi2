@@ -890,6 +890,8 @@ async function loadSettings() {
         }
         if ($('rsiLen')) $('rsiLen').value = cfg.rsi_len || 2;
         if ($('smaLen')) $('smaLen').value = cfg.sma_len || 200;
+        if ($('rsiCum')) $('rsiCum').value = (cfg.rsi_cum === 0 || cfg.rsi_cum === '0') ? 0 : (cfg.rsi_cum || 35);
+        if ($('longsOnly')) $('longsOnly').value = String(!!cfg.longs_only);
         if ($('rsiBuyBelow')) $('rsiBuyBelow').value = cfg.rsi_buy_below || 10;
         if ($('rsiSellAbove')) $('rsiSellAbove').value = cfg.rsi_sell_above || 90;
         if ($('rsiExitLong')) $('rsiExitLong').value = cfg.rsi_exit_long || 65;
@@ -1033,6 +1035,8 @@ async function saveSettings() {
         strategy: $('strategy') ? $('strategy').value : 'rsi2',
         rsi_len: parseInt($('rsiLen')?.value) || 2,
         sma_len: parseInt($('smaLen')?.value) || 200,
+        rsi_cum: parseFloat($('rsiCum')?.value) || 0,
+        longs_only: $('longsOnly') ? $('longsOnly').value === 'true' : false,
         rsi_buy_below: parseFloat($('rsiBuyBelow')?.value) || 10,
         rsi_sell_above: parseFloat($('rsiSellAbove')?.value) || 90,
         rsi_exit_long: parseFloat($('rsiExitLong')?.value) || 65,
@@ -1569,6 +1573,46 @@ function attachListeners() {
     if (strategySel) {
         strategySel.addEventListener('change', updateStrategyUI);
     }
+
+    // ---------- Verified RSI-2 presets (2023-2026 backtest, 10x, 4h) ----------
+    function applyRsiPreset(name) {
+        const set = (id, v) => { const el = $(id); if (el) el.value = v; };
+        set('strategy', 'rsi2');
+        set('rsiLen', 2);
+        set('smaLen', 200);
+        set('rsiExitLong', 65);
+        set('rsiExitShort', 35);
+        set('stopLossPct', 5);
+        set('timeframe', '4h');
+        set('leverage', 10);
+        if (name === 'pro') {
+            set('rsiCum', 35);
+            if ($('longsOnly')) $('longsOnly').value = 'false';
+            set('rsiBuyBelow', 10);
+            set('rsiSellAbove', 90);
+        } else if (name === 'altcoin') {
+            set('rsiCum', 0);
+            if ($('longsOnly')) $('longsOnly').value = 'false';
+            set('rsiBuyBelow', 10);
+            set('rsiSellAbove', 90);
+        } else if (name === 'safe') {
+            set('rsiCum', 35);
+            if ($('longsOnly')) $('longsOnly').value = 'true';
+            set('rsiBuyBelow', 10);
+            set('rsiSellAbove', 90);
+        }
+        if (typeof updateStrategyUI === 'function') updateStrategyUI();
+        const label = { pro: 'PRO (BTC/ETH CUM RSI-35, SL 5%)',
+                        altcoin: 'ALTCOIN (RSI<10, SL 5%)',
+                        safe: 'SAFE (Longs-only CUM RSI-35, SL 5%)' }[name] || name;
+        if (typeof showToast === 'function') showToast('Preset applied: ' + label, 'success');
+    }
+    const presetPro = $('presetProBtn');
+    if (presetPro) presetPro.addEventListener('click', () => applyRsiPreset('pro'));
+    const presetAlt = $('presetAltBtn');
+    if (presetAlt) presetAlt.addEventListener('click', () => applyRsiPreset('altcoin'));
+    const presetSafe = $('presetSafeBtn');
+    if (presetSafe) presetSafe.addEventListener('click', () => applyRsiPreset('safe'));
     window.updateStrategyUI = updateStrategyUI;
     updateStrategyUI();
 

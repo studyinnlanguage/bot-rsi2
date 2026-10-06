@@ -115,6 +115,9 @@ class SymbolWorker(threading.Thread):
                 sell_above=float(config.get("rsi_sell_above", 90)),
                 exit_long_above=float(config.get("rsi_exit_long", 65)),
                 exit_short_below=float(config.get("rsi_exit_short", 35)),
+                cum_rsi=(float(config["rsi_cum"])
+                         if config.get("rsi_cum") else None),
+                longs_only=bool(config.get("longs_only", False)),
             )
         else:
             self.strategy_mode = "ema"

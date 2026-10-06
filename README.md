@@ -1,207 +1,168 @@
-# TradeBot Cloud SaaS v2 — RSI-2 Mean Reversion (Multi-Exchange)
+# TradeBot SaaS v2.1 — RSI-2 PRO (Multi-Exchange Trading Bot + Cloud Panel)
 
-## 🎯 Kya Hai Yeh?
+**Sale-ready crypto futures bot** — Larry Connors ki RSI-2 mean reversion
+strategy (cumulative-RSI PRO mode ke sath), 3 exchanges, web dashboard,
+verified presets, aur poori SaaS billing layer (users, trials, subscriptions,
+admin panel, referrals, licenses).
 
-Yeh **CLOUD SaaS** hai — tumhare **SERVER** pe chalega. Users apne PC pe kuch nahi rakhte. Sirf browser khol ke login karte hain, aur unka bot 24/7 tumhare server pe chalta hai.
+> ⚠️ **HONEST PERFORMANCE NOTE (pehle ye parho):** Verified backtest
+> (2023-2026, real candles, fees included, 10x): BTC/ETH 4h par
+> **~67-70% win rate, profit factor 1.2-1.27**. Ye 90% win rate nahi hai —
+> koi bhi genuine bot 90% nahi deta. Deep drawdowns aate hain aur past
+> performance future ki guarantee nahi. Bot ko **tool** ki tarah becho,
+> "guaranteed profit machine" ki tarah kabhi nahi.
 
-### v2 Naye Changes (IMPORTANT)
+---
 
-- **3 Exchanges supported: Binance + WEEX + MEXC** (futures)
-- **Nayi default strategy: RSI-2 Mean Reversion + 200-SMA filter** — documented 70-80% win rate family (Larry Connors). Backtest (BTC 4h, 3 saal, fees shamil): **71.8% win rate, profit factor 1.24**. Tool: `bot-engine/tools/backtest_rsi2.py`
-- **Safe defaults: leverage 10x (pehle 125x tha!), timeframe 4h (pehle 5m)** — purane defaults pe fees + noise account kha jata tha
-- Purani EMA strategy ab bhi available hai (UI se switch karein)
-- Details: `bot-engine/README.md`
+## ✨ Features (Sale Points)
 
-```
-Tumhara Server (cloud)
-   ├── User 1 ka bot (apni API keys, apni settings)
-   ├── User 2 ka bot (apni API keys, apni settings)
-   ├── User 3 ka bot (apni API keys, apni settings)
-   └── ... 100+ users
+### Strategy Engine
+- **RSI-2 Mean Reversion PRO** — Connors cumulative-RSI entry (RSI[2] 2-bar
+  sum < 35) + 200-SMA trend filter + dual exit (RSI≥65 ya EMA5 bounce) +
+  strict 5% SL. Live engine = verified backtest engine (111/111 trades
+  identical replay).
+- **ALTCOIN mode** — classic RSI<10 entry (ADA/AVAX/SOL ke liye verified best).
+- **SAFE mode** — longs-only (shorts off, higher win rate).
+- **Legacy EMA 8/13/21/55** crossover bhi included (2 strategies 1 bot).
+- One position per coin, anti-immediate-reentry neutral reset, 1h cooldown,
+  intrabar stop-loss watchdog.
 
-Users sirf browser kholte hain → login → dashboard
-Unka PC band bhi ho to bot chalta rahega
-```
+### Exchanges (sab futures, mainnet + testnet*)
+- **Binance USDT-M** — full leverage 1-125x
+- **WEEX** — leverage 1-500x
+- **MEXC** — leverage 1-200x (best fees: 0.00% maker / 0.01% taker —
+  PRO preset ke liye recommended)
+- (*MEXC sirf mainnet — MEXC ka public demo nahi hota)
+- Unlimited multi-coin watchlist, per-exchange max-leverage enforcement,
+  >20x leverage par informed-consent warning popup.
 
-## 🚀 Server Pe Install (ONE COMMAND)
+### Dashboard (browser, mobile PWA)
+- Live candles chart (lightweight-charts) + EMA overlay
+- **1-click verified presets**: PRO / ALTCOIN / SAFE
+- Full RSI-2 parameter control (period, SMA, cum threshold, exits, SL)
+- Trailing TP (1:1 → 1:2 → 1:3 auto-ratchet + break-even) / RSI-exit /
+  EMA-reversal modes
+- Telegram / Email / WhatsApp notifications
+- Position, PnL, logs, start/stop — sab UI se
 
-### Step 1: Zip Upload Karo Server Pe
+### SaaS Layer (tumhare server pe)
+- User signup/login, **7-day free trial**, subscriptions (Basic/Pro/Lifetime)
+- Admin panel: users, extend/ban/delete, licenses, debug logs
+- Per-user bot isolation (alag process/port), API keys encrypted
+- Referral + payout system, payment page, license activation
+- PM2 24/7 + Cloudflare tunnel public URL + Railway/Docker files
+
+---
+
+## 📊 Verified Performance (real data, fees included)
+
+| Preset | Coins | WR | PF (maker) | PF (MEXC-class fees) | 3y ROE @10x |
+|---|---|---|---|---|---|
+| **PRO** (CUM RSI-35, SL 5%) | BTC | 67-69% | 1.21 | **1.27** | +359% |
+| | ETH | 70% | 1.20 | **1.24** | +504% |
+| **ALTCOIN** (RSI<10, SL 5%) | ADA | 66% | 1.21 | 1.24 | +651% |
+| | AVAX | 67% | 1.15 | 1.18 | +548% |
+| | SOL | 65% | 1.10 | 1.13 | +409% |
+| **SAFE** (longs-only) | BTC/ETH | 69-72% | — | — | lower (stable) |
+
+**Kaise parhein:** 10x leverage par +359% ROE / 3y ≈ margin par ~120%/year.
+Max drawdown ROE curve par ~40%+ margin tak — iske liye tayyar raho.
+
+**Rejected coins** (har config mein loss): LINK, TRX, XRP, BNB, DOGE, memes.
+**Rejected timeframes**: 5m / 15m / 1h (fees + noise) — **sirf 4h use karo**.
+
+Full tables + methodology: [`BACKTEST_RESULTS.md`](BACKTEST_RESULTS.md)
+
+### Fees = sab kuch
+| Order type | Fee/side | Result |
+|---|---|---|
+| Market (taker) | 0.05% | edge ~khatam |
+| Limit (maker) | 0.02% | solid |
+| MEXC | 0.00-0.01% | best |
+
+**Rule: PRO preset MEXC pe chalao, ya Binance pe limit entries use karo.**
+
+---
+
+## 🚀 Quick Start (VPS)
+
 ```bash
-scp tradebot-cloud.zip user@your-server-ip:~/
+scp repo.zip user@server:~/ && ssh user@server
+unzip repo.zip && cd bot-rsi2 && chmod +x install.sh && ./install.sh
+cloudflared tunnel --url http://localhost:5000   # public URL
 ```
 
-### Step 2: Extract + Install
-```bash
-ssh user@your-server-ip
-unzip tradebot-cloud.zip
-cd tradebot-cloud
-chmod +x install.sh
-./install.sh
-```
+Admin panel: `https://your-url/admin` (password `.env` mein `ADMIN_SECRET`)
 
-**Bas! 5 minute mein sab ready.** Install script sab khud karta hai:
-- ✅ Python 3 + pip install
-- ✅ PM2 (24/7 auto-restart ke liye)
-- ✅ Bot dependencies
-- ✅ Secrets generate
-- ✅ Server start on port 5000
+## 👤 Client Flow (Sale ke waqt)
 
-### Step 3: Public URL (Cloudflare Tunnel - FREE)
-```bash
-cloudflared tunnel --url http://localhost:5000
-```
-Yeh ek public URL dega jaise `https://random-words.trycloudflare.com`. Users ko yeh URL bhejo.
+1. Client ko public URL do → Sign Up (7-day trial auto)
+2. Dashboard → Settings: exchange (MEXC recommended), API keys, coins
+   (**BTC + ETH only**), **PRO preset click**, leverage 10x, Save
+3. Testnet se verify karo → phir mainnet chalu
+4. Trial khatam → tum admin panel se subscription extend karo
 
-## 👤 Users Kaise Use Karenge
-
-1. Tumhara URL pe jayenge (jaise `https://abc.trycloudflare.com`)
-2. **Sign Up** karenge (email + password) → 7-day free trial
-3. Login → Dashboard khulega
-4. **Settings** tab mein:
-   - Exchange select (Binance/WEEX)
-   - API Key + Secret + Passphrase enter
-   - Coins add karein
-   - Leverage, SL/TP set karein
-   - **Save** dabao
-5. **Overview** tab mein → **Start Bot** dabao
-6. Bot 24/7 chalega (server pe) — user ka PC band bhi ho to
-
-## 👨‍💼 Admin (Tum) Kaise Manage Karoge
-
-1. `https://abc.trycloudflare.com/admin` kholo
-2. Password: **`AdminBot@2024!`** (change it in `.env` file)
-3. Sab users dekh sakte ho:
-   - Email, name, subscription status
-   - Bot running ya nahi
-   - Exchange kya use kar raha
-4. **Actions:**
-   - **Extend** — user ki subscription extend karo (days add karo)
-   - **Ban/Unban** — user ko block/unblock karo
-   - **Delete** — user permanently delete karo
-
-## 💰 Subscription System
-
-- **Trial:** 7 days free (auto, har naye user ko)
-- **Basic/Pro/Lifetime:** Admin manually extend karta hai
-- Expired users ka bot automatically stop ho jata hai
-
-## 📋 Pricing Suggestion
+## 💰 Suggested Pricing
 
 | Plan | Price | Duration |
-|------|-------|----------|
+|---|---|---|
 | Trial | FREE | 7 days |
 | Monthly | $30 | 30 days |
 | Quarterly | $75 | 90 days |
 | Yearly | $250 | 365 days |
-| Lifetime | $400 | Forever |
+| Lifetime | $400 | forever |
 
-Admin panel se user ki subscription extend karo jab woh payment kare.
+Sales playbook + client FAQ: [`DEPLOY_AND_SALE.md`](DEPLOY_AND_SALE.md)
 
 ## 🔒 Security
 
-- ✅ API keys **encrypted** store hoti hain (AES-style XOR + base64)
-- ✅ Passwords **hashed** (SHA-256 + salt)
-- ✅ Per-user bot isolation (alag process, alag port)
-- ✅ Admin password protected
-- ✅ Session-based auth (7-day expiry)
+- API keys encrypted (XOR+base64, per-install key), passwords salted-hash
+- Per-user process isolation, session auth (7-day), admin protected
+- Exchange-side SL attached + software watchdog (double layer)
 
-## 🤖 Bot Strategy (UNCHANGED)
+## 🧪 Backtesting Tools (included — clients ko bhi trust dilao)
 
-- EMA 8, 13, 21, 55 crossover ✓
-- 1:3 Risk-Reward (SL=2%, TP=6% hardcoded) ✓
-- Fresh cross detection ✓
-- Software SL/TP watchdog ✓
-- Real exchange SL/TP (WEEX) ✓
-- Binance + WEEX support ✓
+```bash
+cd bot-engine/tools
+python backtest_rsi2.py --symbol BTCUSDT            # RSI-2 official tool
+python backtest_ema.py --symbol BTCUSDT             # purani EMA vs RSI-2
+python live_signal_monitor.py                       # live signal tracker
+```
 
-**Koi strategy change nahi hua.** Sirf cloud layer add hua.
-
-## 📁 Folder Structure
+## 📁 Structure
 
 ```
-tradebot-cloud/
-├── install.sh              ← ONE command install
-├── app.py                  ← Main SaaS app (Flask)
-├── .env                    ← Secrets (auto-generated)
-├── bot-engine/             ← Python bot (UNCHANGED)
-│   ├── app.py              ← Bot Flask app
+bot-rsi2/
+├── app.py                  ← SaaS layer (users, billing, admin, referrals)
+├── install.sh              ← one-command VPS install
+├── bot-engine/
+│   ├── app.py              ← bot API + config validation (presets, rsi_cum)
 │   ├── bot/
-│   │   ├── strategy.py     ← EMA 8,13,21,55
-│   │   ├── trader.py       ← Binance
-│   │   ├── weex_trader.py  ← WEEX
-│   │   └── engine.py       ← Bot engine
-│   └── requirements.txt
-├── templates/
-│   ├── cloud_login.html    ← Login/Signup page
-│   ├── cloud_dashboard.html ← User dashboard
-│   └── cloud_admin.html    ← Admin panel
-├── database.json           ← Users + configs (auto-created)
-├── user_configs/           ← Per-user bot configs
-└── logs/                   ← Log files
+│   │   ├── strategy.py     ← RSI-2 PRO (cum mode) + legacy EMA
+│   │   ├── engine.py       ← trading engine, strategy selector
+│   │   ├── trader.py       ← Binance adapter
+│   │   ├── weex_trader.py  ← WEEX adapter
+│   │   ├── mexc_trader.py  ← MEXC adapter
+│   │   └── notifier.py     ← Telegram/Email/WhatsApp
+│   ├── templates/dashboard.html ← trading dashboard (presets UI)
+│   ├── static/             ← PWA assets
+│   └── tools/              ← backtest + monitor tools
+├── BACKTEST_RESULTS.md     ← full evidence (methodology + tables)
+├── DEPLOY_AND_SALE.md      ← sales playbook
+└── CHANGELOG.md
 ```
 
-## 🛠️ Management Commands
+## ⚠️ Risk Disclosure (clients ko bhi yehi bolo)
 
-```bash
-pm2 status                    # Check if running
-pm2 logs tradebot-cloud       # View live logs
-pm2 restart tradebot-cloud    # Restart server
-pm2 stop tradebot-cloud       # Stop server
-
-# Cloudflare tunnel (public URL ke liye)
-cloudflared tunnel --url http://localhost:5000
-```
-
-## ⚠️ Important Notes
-
-1. **Admin password change karo!** `.env` file mein `ADMIN_SECRET` edit karo
-2. **Encryption key change karo!** `.env` file mein `ENCRYPTION_KEY` (install script khud generate karta hai)
-3. **Database backup** — `database.json` file ka backup rakho
-4. **Server specs:**
-   - 10 users: 2GB RAM, 1 CPU
-   - 50 users: 4GB RAM, 2 CPU
-   - 100 users: 8GB RAM, 4 CPU
-
-## 🆘 Troubleshooting
-
-### Bot not starting for user?
-```bash
-pm2 logs tradebot-cloud --lines 50
-cat logs/bot_<user_id>.log
-```
-
-### Admin password change?
-Edit `.env` file:
-```
-ADMIN_SECRET=YourNewPassword123
-```
-Then: `pm2 restart tradebot-cloud`
-
-### Database reset?
-```bash
-pm2 stop tradebot-cloud
-rm database.json
-pm2 start tradebot-cloud
-```
-**Warning:** Sab users delete ho jayenge!
-
-### Public URL band ho gaya?
-Cloudflare tunnel ko background mein chalao:
-```bash
-nohup cloudflared tunnel --url http://localhost:5000 > tunnel.log 2>&1 &
-```
-
-## 📊 Revenue Projection
-
-| Users | Monthly | Yearly | Server Cost | Profit |
-|-------|---------|--------|-------------|--------|
-| 10 | $300 | $3,600 | $20 | $280/mo |
-| 25 | $750 | $9,000 | $40 | $710/mo |
-| 50 | $1,500 | $18,000 | $80 | $1,420/mo |
-| 100 | $3,000 | $36,000 | $150 | $2,850/mo |
+1. Crypto futures leverage trading mein **poora margin doob sakta hai**.
+2. Is bot ka verified edge ~67-70% WR / PF 1.2 hai — **losses aayenge**,
+   strategy unhe drawdown mein manage karti hai.
+3. 50x-125x leverage + meme coins = liquidation (humne real data se prove
+   kiya hai — BACKTEST_RESULTS.md dekho). Bot defaults 10x hain, isse
+   mat badlo jab tak risk samajh na ho.
+4. Pehle **testnet**, phir chhoti amount, phir badhao.
 
 ---
 
-**Made with ❤️ — Cloud SaaS for trading bot.**
-
-Strategy UNCHANGED: EMA 8,13,21,55 + 1:3 RR + fresh cross only.
+**v2.1** — RSI-2 PRO (cumulative) + verified presets + 3 exchanges + SaaS.
+Live engine replay-verified against backtest engine (0% drift).

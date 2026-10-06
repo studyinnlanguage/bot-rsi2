@@ -54,3 +54,6 @@ Thumbs.db
 
 # Docker
 *.log
+
+# Backtest data cache
+tools/cache/
