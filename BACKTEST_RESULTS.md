@@ -60,6 +60,56 @@ guarantee the 2023-26 regime persists.
 
 ---
 
+## REAL WALLET EXPECTATIONS (v2.2 sizing study — the numbers that matter)
+
+The ROE figures above are **sums of per-trade ROEs at full margin**. A real
+wallet compounds, and full-margin compounding is mathematically ruinous:
+one 5% SL at 10x = -50% of margin, so several SL hits in a row destroy the
+account even with PF 1.2. The real lever is **position sizing**, not leverage.
+
+Fixed-fractional simulation ($100 wallet, 5-coin PRO portfolio
+BTC/ETH/AVAX cum35 + ADA/SOL classic10, 4h, SL 5%, 10x, 3y, 1326 trades):
+
+| Risk per trade (of coin slice) | SL loss in wallet terms | $100 becomes (maker) | $100 becomes (MEXC fees) | CAGR | Max DD | Positive months |
+|---|---|---|---|---|---|---|
+| 10% ($2 margin) | ~1% | $137 | $149 | +12-15%/y | 19% | 57% |
+| **20% ($4 margin)** | **~2%** | **$155** | **$182** | **+16-23%/y** | 37-38% | 57% |
+| 30% ($6 margin) | ~3% | $145 | $183 | +14-23%/y | 55% | 54% |
+| 50% ($10 margin) | ~5% | $77 | $113 | -9 to +4%/y | 80% | 57% |
+| 100% (full margin) | ~10% | $3 | $7 | ruin | 99% | 51% |
+
+Sweet spot = **risk ~2% of wallet per trade** (margin = 20% of the coin slice
+at 10x). More risk does not make more money — variance drag eats it.
+
+### What this means for a $100 wallet (honest answer)
+
+- Best verified case: **+16-23% per year** ($100 -> $155-182 in 3y), i.e.
+  **~$0.05-0.08 per day AVERAGE** — with 40% of days having no trade at all,
+  ~21% of days negative, worst single day -$17, best +$18.
+- Trade frequency (PRO 5-coin): **~37 trades/month (~1.2/day)**, each holding
+  hours-to-2-days. SAFE 2-coin longs-only: ~8 trades/month, 80% of days flat.
+- Months: ~57% positive, average month +1-3%, best +39%, worst -19%.
+- **$2-3/day on $100 = 730-1100%/year. No real strategy does this.** Anyone
+  promising it is running a martingale that blows up eventually. For a
+  $2-3/day average at this strategy's honest edge you need a
+  **$3,000-6,000 wallet**, or sell the bot to clients (the realistic income).
+- Leverage beyond 10-15x adds nothing when risk-sizing (same edge, faster
+  liquidation: at 125x the liquidation distance ~0.4% is inside 4h noise).
+
+### Entry-relaxation check (can we trade more? no)
+
+| Entry | trades/3y BTC+ETH | PF (maker) | Verdict |
+|---|---|---|---|
+| CUM RSI-35 (PRO) | 524 | 1.20 | peak — keep |
+| CUM 40 / 45 / 50 | 598 / 672 / 730 | 1.11 / 1.07 / 1.01 | edge dies |
+| classic RSI<10 | 527 | 1.12 | weaker |
+| classic RSI<15/20/25 | 720 / 873 / 1010 | 1.17 / 1.13 / 1.01 | more trades, less edge |
+
+2h timeframe also re-tested (517-537 trades/coin/3y): PF 1.13-1.17 maker,
+equity still worse than 4h after fees. **4h + CUM35 stays the only config.**
+
+---
+
 ## Historical: original corrected analysis (v2.0, before optimization)
 
 ## Bug disclosure (read this first)

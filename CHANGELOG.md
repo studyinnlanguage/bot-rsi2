@@ -1,5 +1,22 @@
 # Changelog
 
+## v2.2 (Oct 2026) — Real Wallet Expectations (sizing study)
+
+### Added
+- **REAL WALLET EXPECTATIONS section** in BACKTEST_RESULTS.md: fixed-fractional
+  sizing simulation on $100 (PRO 5-coin portfolio, 1326 trades, 3y).
+  Sweet spot = ~2% wallet risk per trade -> +16-23%/yr, 57% months positive,
+  maxDD ~37%. Full margin = ruin (variance drag). Entry-relaxation sweep
+  (CUM 40/45/50, classic RSI<15/20/25) and 2h timeframe re-test: both lose
+  edge vs PRO cum35 on 4h — confirms v2.1 config as the peak.
+- README: REAL WALLET MATH note — honest daily/monthly expectations for
+  buyers, scam-warning against $2-3/day claims (730-1100%/yr = martingale).
+
+### Why
+- Client question: "$100 wallet pe daily $2-3 possible?" — answered with
+  data: no honest strategy can do it; expected value documented; sales
+  messaging now includes realistic wallet math to protect buyers and seller.
+
 ## v2.1 (Oct 2026) — RSI-2 PRO + Verified Presets
 
 ### Added

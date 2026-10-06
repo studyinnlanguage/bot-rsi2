@@ -1,4 +1,4 @@
-# TradeBot SaaS v2.1 — RSI-2 PRO (Multi-Exchange Trading Bot + Cloud Panel)
+# TradeBot SaaS v2.2 — RSI-2 PRO (Multi-Exchange Trading Bot + Cloud Panel)
 
 **Sale-ready crypto futures bot** — Larry Connors ki RSI-2 mean reversion
 strategy (cumulative-RSI PRO mode ke sath), 3 exchanges, web dashboard,
@@ -11,6 +11,15 @@ admin panel, referrals, licenses).
 > koi bhi genuine bot 90% nahi deta. Deep drawdowns aate hain aur past
 > performance future ki guarantee nahi. Bot ko **tool** ki tarah becho,
 > "guaranteed profit machine" ki tarah kabhi nahi.
+
+> 💰 **REAL WALLET MATH (v2.2 sizing study):** Proper risk-sizing (har trade
+> pe wallet ka ~2% risk) ke sath $100 wallet realistic: **+16-23% per year**
+> (3 saal me $100 -> $155-182), average **~$0.05-0.08/day**. PRO 5-coin
+> portfolio me ~37 trades/month (1.2/day), 57% months positive, worst month
+> -19%, max drawdown ~37%. **$2-3/day on $100 (730-1100%/year) koi real
+> strategy nahi de sakta** — jo bole wo martingale/scam hai. Is edge pe
+> $2-3/day ke liye $3,000-6,000 wallet chahiye. Full details:
+> BACKTEST_RESULTS.md → "REAL WALLET EXPECTATIONS".
 
 ---
 
