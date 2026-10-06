@@ -28,6 +28,33 @@ Reproduce: `python3 tools/backtest_rsi2.py --symbol ETHUSDT`
 6. Verified win rate is **~70%, not 80-90%** (YouTube claims are marketing).
 7. Always demo-test 2-4 weeks before live trading.
 
+## EMA 8/13/21/55 (old strategy) vs RSI-2 — same data, same fees
+
+Old bot rules replicated exactly: fresh EMA55-cross entry, SL 2%, TP 6% OR
+EMA55-flip close + reverse, `reset_cross_state` wait after SL/TP close.
+Fees 0.05%/side. Liquidation model included for high leverage.
+
+Reproduce: `python3 tools/backtest_ema.py --symbol BTCUSDT --tf 4h --years 3`
+
+| Config (original bot settings) | Trades | Win Rate | Profit Factor | Total Return | Max DD |
+|---|---|---|---|---|---|
+| BTC 5m, 3 months, 10x (original default TF) | 662 | **22.4%** | 0.56 | **-777%** | 775% |
+| BTC 5m, 3 months, 50x | 662 | 22.4% | 0.56 | -3,896% | 4 liquidations |
+| BTC 5m, 3 months, 125x | 632 | 19.3% | 0.53 | **-9,437%** | **167 liquidations** |
+| BTC 1h, 1 year, 10x | 175 | 33.7% | 1.07 | +105% | 244% |
+| BTC 4h, 3 years, 10x (EMA best case) | 131 | 30.5% | 1.11 | +199% | 260% |
+| ETH 4h, 3 years, 10x | 147 | 27.2% | 0.97 | **-78%** | 394% |
+| **RSI-2 BTC 4h, 3y, 10x** | 263 | **71.9%** | **1.26** | **+380%** | 158% |
+| **RSI-2 ETH 4h, 3y, 10x** | 307 | **69.1%** | **1.25** | **+588%** | 254% |
+
+Why the old strategy lost:
+1. **5m whipsaw**: 662 trades in 3 months, 654 closed by EMA-flip (enter ->
+   whipsaw -> flip -> re-enter). 22% win rate; fees + churn bleed the account.
+2. **125x leverage**: liquidation at ~0.4% adverse move — 167 of 632 trades
+   were liquidated to -100% each before the 2% SL could ever fire.
+3. **Even at its best (BTC 4h)** only 30.5% of trades win — 7 of 10 trades are
+   losses, with long losing streaks (260% ROE drawdown). On ETH it loses net.
+
 ## Live Signal Monitor (keyless paper trading)
 
 Runs the bot's actual strategy module on live exchange candles with virtual
