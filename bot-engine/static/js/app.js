@@ -952,19 +952,19 @@ function setExchange(exchange) {
     document.querySelectorAll('.weex-only').forEach(btn => {
         btn.style.display = exchange === 'weex' ? '' : 'none';
     });
-    // Update max leverage label and input max
+    // Show/hide MEXC-only leverage buttons (150x-200x)
+    document.querySelectorAll('.mexc-only').forEach(btn => {
+        btn.style.display = exchange === 'mexc' ? '' : 'none';
+    });
+    // Update max leverage label and input max (per-exchange caps)
     const maxLevLabel = $('maxLevLabel');
     const levInput = $('leverage');
     const maxLevBtn = $('maxLeverageBtn');
-    if (exchange === 'weex') {
-        if (maxLevLabel) maxLevLabel.textContent = '500';
-        if (levInput) levInput.max = '500';
-        if (maxLevBtn) maxLevBtn.textContent = 'SET 500x LEVERAGE';
-    } else {
-        if (maxLevLabel) maxLevLabel.textContent = '125';
-        if (levInput) levInput.max = '125';
-        if (maxLevBtn) maxLevBtn.textContent = 'SET 100x LEVERAGE';
-    }
+    const EXCH_MAX_LEV = { binance: 125, weex: 500, mexc: 200 };
+    const maxLev = EXCH_MAX_LEV[exchange] || 125;
+    if (maxLevLabel) maxLevLabel.textContent = String(maxLev);
+    if (levInput) levInput.max = String(maxLev);
+    if (maxLevBtn) maxLevBtn.textContent = exchange === 'binance' ? 'SET 100x LEVERAGE' : `SET ${maxLev}x LEVERAGE`;
     // Update env badge
     const testnet = $('testnet') ? $('testnet').value === 'true' : true;
     updateEnvBadge(testnet, exchange);
@@ -1584,6 +1584,16 @@ function attachListeners() {
 
     // Helper function to apply leverage immediately to exchange and UI
     async function applyLeverageDirect(lev) {
+        // High-leverage risk warning (user freedom preserved - just informed consent)
+        if (lev > 20) {
+            const feePct = (lev * 0.1).toFixed(0); // 0.05%/side taker x2, as % of margin
+            const ok = confirm(`⚠️ HIGH LEVERAGE: ${lev}x\n\n` +
+                `• ${lev}x par sirf ${(100 / lev).toFixed(2)}% price move = margin khatam\n` +
+                `• Fees har round-trip mein margin ka ~${feePct}% kha jati hai\n` +
+                `• Backtest 10x par verify hui (71.9% WR) - high leverage par ruin risk bohat barh jata hai\n\n` +
+                `Phir bhi ${lev}x apply karna hai?`);
+            if (!ok) return;
+        }
         const levInput = $('leverage');
         if (levInput) levInput.value = lev;
         if ($('posLeverage')) $('posLeverage').textContent = `${lev}x`;
@@ -1619,12 +1629,12 @@ function attachListeners() {
         });
     });
 
-    // Max leverage button (100x for Binance, 500x for WEEX)
+    // Max leverage button (per-exchange: Binance 100x, WEEX 500x, MEXC 200x)
     const maxLevBtn = $('maxLeverageBtn');
     if (maxLevBtn) {
         maxLevBtn.addEventListener('click', () => {
             const exchange = document.querySelector('.exchange-btn.active')?.dataset.exchange || 'binance';
-            const maxLev = exchange === 'weex' ? 500 : 100;
+            const maxLev = { binance: 100, weex: 500, mexc: 200 }[exchange] || 100;
             // Highlight matching quick-lev button
             document.querySelectorAll('.quick-leverage .btn').forEach(b => {
                 b.style.background = '';

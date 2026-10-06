@@ -216,7 +216,9 @@ def update_config():
         CONFIG["exchange"] = "binance"
     # NOTE: sane leverage caps. 125x is available but NOT recommended —
     # fees alone are ~15% of margin per round trip at 125x. 5-10x is healthy.
-    max_lev = 125 if CONFIG["exchange"] in ("weex", "mexc") else 125
+    # Per-exchange max leverage: Binance 125x, WEEX 500x, MEXC 200x
+    _MAX_LEV = {"binance": 125, "weex": 500, "mexc": 200}
+    max_lev = _MAX_LEV.get(CONFIG["exchange"], 125)
     CONFIG["leverage"] = max(1, min(max_lev, int(CONFIG["leverage"])))
     CONFIG["amount"] = max(1, float(CONFIG["amount"]))
     CONFIG["amount_pct"] = max(1, min(100, float(CONFIG["amount_pct"])))
@@ -277,7 +279,9 @@ def set_leverage():
     except (ValueError, TypeError):
         return jsonify({"success": False, "error": "Invalid leverage"}), 400
 
-    max_lev = 500 if (CONFIG.get("exchange") or "binance").lower() == "weex" else 125
+    # Per-exchange max leverage: Binance 125x, WEEX 500x, MEXC 200x
+    _MAX_LEV = {"binance": 125, "weex": 500, "mexc": 200}
+    max_lev = _MAX_LEV.get((CONFIG.get("exchange") or "binance").lower(), 125)
     lev = max(1, min(max_lev, lev))
     CONFIG["leverage"] = lev
     save_config(CONFIG)
