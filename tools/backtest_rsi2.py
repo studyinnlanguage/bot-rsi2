@@ -130,9 +130,15 @@ def run_backtest(symbol: str, interval: str, total: int,
                                "roe_pct": roe, "reason": reason})
                 position = None
                 cooldown_until = ts + pd.Timedelta(hours=1)
+                # Live engine calls reset_cross_state() after every close:
+                # RSI must return to the neutral band (30-70) before the
+                # next entry is allowed. Replicate that here.
+                strat.reset_cross_state()
                 continue
 
-        # --- entry ---
+        # --- entry (ONLY when flat - never replace an open position) ---
+        if position is not None:
+            continue
         if cooldown_until is not None and ts <= cooldown_until:
             continue
         if mode != "both" and ((mode == "long" and res.signal == Signal.SELL) or

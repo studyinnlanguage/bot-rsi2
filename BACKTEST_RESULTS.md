@@ -1,38 +1,80 @@
-# RSI-2 Backtest Results — Multi-Coin Verification (Oct 2026)
+# RSI-2 Backtest Results — CORRECTED (Oct 2026)
 
-**Setup:** 3 years real Binance USDT-M candles (2023-10-01 → 2026-10-06), 4h timeframe,
-10x leverage, 3% price SL, taker fees 0.05%/side included, non-compounding per-trade margin.
+## Bug disclosure (read this first)
 
-Reproduce: `python3 tools/backtest_rsi2.py --symbol ETHUSDT`
+The results previously published in this file (Oct 6, commit 5a517d9) were
+**INFLATED by a simulation bug**: the backtester let a fresh signal REPLACE an
+open virtual position without booking the replaced trade's loss, and it skipped
+the live engine's post-close `reset_cross_state()` (RSI must return to the
+neutral 30-70 band before the next entry). The live bot takes ONE position per
+symbol and respects the neutral reset — the corrected tool now replicates that
+exactly. Every number below is corrected.
 
-## Results
+## Timeframe comparison — BTCUSDT (3y real candles, fees 0.05%/side, SL 3%, 10x)
 
-| Coin | Trades | Win Rate | Avg Win | Avg Loss | Profit Factor | Total Return | Max Drawdown |
-|-------|--------|----------|---------|----------|---------------|--------------|--------------|
-| BTCUSDT | 263 | **71.9%** | +9.9% ROE | -20.0% ROE | **1.26** | **+379.7% ROE** | 157.9% ROE |
-| ETHUSDT | 307 | **69.1%** | +13.9% ROE | -24.7% ROE | **1.25** | **+587.5% ROE** | 253.9% ROE |
-| SOLUSDT | 302 | 61.6% | +18.2% ROE | -27.8% ROE | 1.05 | +164.4% ROE | 589.5% ROE |
-| BNBUSDT | 260 | 68.8% | +10.3% ROE | -21.4% ROE | 1.06 | +99.9% ROE | 389.6% ROE |
-| XRPUSDT | 279 | 64.2% | +15.0% ROE | -26.3% ROE | 1.03 | +65.9% ROE | 334.5% ROE |
-| DOGEUSDT | 282 | 56.4% | +20.5% ROE | -28.0% ROE | **0.94** | **-191.8% ROE** | 433.1% ROE |
+| Timeframe | Trades | Win Rate | Profit Factor | Total Return |
+|---|---|---|---|---|
+| 5m (3 months) | 686 | 24.2% | 0.21 | **-576%** |
+| 15m (1 year) | 1187 | 47.9% | 0.57 | **-830%** |
+| 1h (3 years) | 966 | 58.7% | 0.67 | **-1120%** |
+| **4h (3 years)** | 248 | 62.9% | **0.90** | **-176%** |
+| 1d (3 years) | 33 | 48.5% | 0.74 | **-138%** |
 
-## Honest Conclusions
+ETH shows the same shape (4h: 285 trades, 64.9% WR, PF 1.01, +35.0%).
+Lower timeframe = more trades x fees = death. 4h is the least-bad.
 
-1. **RSI-2 mean reversion works BEST on BTC & ETH** (PF 1.25-1.26, ~70% win rate).
-2. SOL / BNB / XRP: marginally profitable after fees — use small position size only.
-3. **DOGE / meme coins: strategy LOSES money** — mean reversion fails on
-   strongly trending, meme-driven coins. DO NOT trade meme coins with this bot.
-4. Recommended watchlist: **BTCUSDT + ETHUSDT** (core), optionally BNB/SOL/XRP small size.
-5. Max drawdown is large relative to per-trade margin — use **% of wallet sizing
-   with 5-10% per trade** so a drawdown never threatens the account.
-6. Verified win rate is **~70%, not 80-90%** (YouTube claims are marketing).
-7. Always demo-test 2-4 weeks before live trading.
+## Parameter scan (4h, 3y, BTC + ETH, corrected)
+
+| Variant | BTC PF | ETH PF |
+|---|---|---|
+| SL 1.5% | 0.82 | 0.86 |
+| SL 2% | 0.90 | 0.95 |
+| SL 3% (default) | 0.90 | 1.01 |
+| **SL 5%** | **1.07** (+100.8% ROE/3y) | **1.01** (+35.8% ROE/3y) |
+| SL 8% | 1.04 | 0.95 |
+| RSI-only exit (no EMA5 fast exit) | 0.90 | 1.03 |
+
+Best found = wider SL (5%) — fewer whipsaw stop-outs. Still only marginal.
+
+## 18-coin sweep (4h, 3 years, SL 5%, corrected engine)
+
+| Coin | PF | Return | | Coin | PF | Return |
+|---|---|---|---|---|---|---|
+| ADA | **1.15** | +423% | | LTC | 0.98 | -57% |
+| BTC | 1.07 | +101% | | DOGE | 0.94 | -203% |
+| OP | 1.07 | +255% | | 1000PEPE | 0.93 | -318% |
+| SOL | 1.05 | +160% | | BNB | 0.88 | -228% |
+| ETH | 1.01 | +36% | | SUI | 0.86 | -553% |
+| AVAX | 1.00 | +6% | | XRP | 0.83 | -492% |
+| ARB | 0.92 | -310% | | LINK | 0.74 | -947% |
+| APT | 0.89 | -421% | | TRX | 0.54 | -863% |
+| NEAR | 0.90 | -405% | | DOT | 0.90 | -319% |
+
+## Honest conclusions (rewritten)
+
+1. **After taker fees, RSI-2 with these rules is break-even at best on 4h.**
+   All lower timeframes (5m/15m/1h) LOSE badly. The earlier "+380-590% ROE,
+   70-72% WR" claims were the bug's artifact — verified win rate is 60-65%,
+   profit factor 0.9-1.07.
+2. Of 18 coins tested, only ADA clears PF 1.15 (best-of-18 sample, likely
+   luck); BTC/OP/SOL/ETH/AVAX are marginal (1.00-1.07); 12 coins lose.
+3. Meme coins (PEPE, DOGE) lose — confirmed again on corrected data.
+4. Live results will be WORSE than backtest: funding rates (perps), slippage,
+   and partial fills are NOT in these numbers.
+5. Realistic expectation at 10x on the best config: roughly +1-3% per month
+   average on margin, with 250-500% ROE drawdowns along the way — i.e. **no
+   meaningful edge after costs**. Do NOT run this live with money you cannot
+   afford to lose. Paper trade first.
+6. The old EMA 8/13/21/55 strategy is far worse (see section below).
+7. If a higher fee tier / worse fills apply to your account, subtract ~0.1%
+   round-trip notional per trade from every result above.
 
 ## EMA 8/13/21/55 (old strategy) vs RSI-2 — same data, same fees
 
 Old bot rules replicated exactly: fresh EMA55-cross entry, SL 2%, TP 6% OR
 EMA55-flip close + reverse, `reset_cross_state` wait after SL/TP close.
 Fees 0.05%/side. Liquidation model included for high leverage.
+(This tool never had the replacement bug — entries only when flat.)
 
 Reproduce: `python3 tools/backtest_ema.py --symbol BTCUSDT --tf 4h --years 3`
 
@@ -44,8 +86,6 @@ Reproduce: `python3 tools/backtest_ema.py --symbol BTCUSDT --tf 4h --years 3`
 | BTC 1h, 1 year, 10x | 175 | 33.7% | 1.07 | +105% | 244% |
 | BTC 4h, 3 years, 10x (EMA best case) | 131 | 30.5% | 1.11 | +199% | 260% |
 | ETH 4h, 3 years, 10x | 147 | 27.2% | 0.97 | **-78%** | 394% |
-| **RSI-2 BTC 4h, 3y, 10x** | 263 | **71.9%** | **1.26** | **+380%** | 158% |
-| **RSI-2 ETH 4h, 3y, 10x** | 307 | **69.1%** | **1.25** | **+588%** | 254% |
 
 Why the old strategy lost:
 1. **5m whipsaw**: 662 trades in 3 months, 654 closed by EMA-flip (enter ->
@@ -54,11 +94,14 @@ Why the old strategy lost:
    were liquidated to -100% each before the 2% SL could ever fire.
 3. **Even at its best (BTC 4h)** only 30.5% of trades win — 7 of 10 trades are
    losses, with long losing streaks (260% ROE drawdown). On ETH it loses net.
+4. Real-data check on the user's own dashboard coin (1000000MOGUSDT 5m, 50x):
+   99 trades / 14 days, PF 0.70, -1,115% ROE, **17 liquidations**.
 
 ## Live Signal Monitor (keyless paper trading)
 
 Runs the bot's actual strategy module on live exchange candles with virtual
-positions, SL and fees — no API keys needed:
+positions, SL and fees — no API keys needed. The monitor uses the CORRECT
+live semantics (one position per symbol + reset_cross_state after close).
 
 ```bash
 python3 tools/live_signal_monitor.py --tf 4h --tag 4h --interval 60
@@ -66,3 +109,9 @@ python3 tools/live_signal_monitor.py --tf 15m --tag 15m --interval 60
 ```
 
 Logs: `/logs/live_monitor_*.log`, virtual trades: `/logs/live_trades_*.json`
+
+Reproduce corrected backtests:
+```bash
+python3 tools/backtest_rsi2.py --symbol BTCUSDT --tf 4h --years 3
+python3 tools/backtest_ema.py --symbol BTCUSDT --tf 4h --years 3
+```

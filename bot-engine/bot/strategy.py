@@ -221,9 +221,10 @@ class RSI2MeanReversionStrategy:
       - ENTRY  : RSI(2) crosses ABOVE `sell_above` (default 90)
       - EXIT   : close falls below EMA(5) OR RSI(2) <= `exit_short_below` (35)
 
-    Backtest evidence (BTCUSDT 4h, 3 years, 0.05%/side fees, 10x):
-      Win rate ~72% | Profit factor ~1.34 | +440% cumulative ROE
-      (1h timeframe is NOT profitable after fees — use 4h or higher.)
+    Backtest evidence (CORRECTED engine, BTCUSDT 4h, 3y, 0.05%/side fees, 10x):
+      Win rate ~63% | Profit factor 0.90 (SL 3%) to 1.07 (SL 5%) | roughly
+      break-even after fees. ALL lower timeframes (5m/15m/1h) lose badly.
+      Expectations: no strong edge — paper trade before risking money.
 
     Fresh-trigger detection: a signal fires ONLY on the candle where RSI
     first enters the entry zone (prev RSI was outside). After a trade
